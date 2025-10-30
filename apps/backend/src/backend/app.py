@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
+import backend.payments.models  # noqa: F401 - ensure models are registered with SQLAlchemy metadata
 from backend.api.middleware import CorrelationIdMiddleware, RequestLoggingMiddleware
 from backend.api.routes import load_routers
 from backend.auth.middleware import CurrentUserMiddleware
