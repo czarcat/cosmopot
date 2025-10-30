@@ -232,5 +232,67 @@ http --session=auth GET :8000/api/v1/auth/me
 http --session=auth POST :8000/api/v1/auth/logout
 ```
 
+### Task status streaming
+
+The backend exposes a WebSocket endpoint at `ws://<host>/ws/tasks/{task_id}` that delivers real-time
+updates for generation tasks:
+
+- Authenticate by providing the `X-User-Id` header during the WebSocket handshake. Only the owner of the task can
+  subscribe to its updates.
+- The server immediately sends a `snapshot` message containing the latest persisted task state so reconnecting
+  clients do not miss updates.
+- Subsequent updates are published with `type="update"` in the order they are written to the database. Each payload
+  includes a monotonically increasing `sequence`, `status`, optional `error`, and a `terminal` flag indicating
+  whether the task is finished.
+- Heartbeat frames (`type="heartbeat"`) are sent every ~15 seconds when no state changes occur. Connections are
+  closed with code `1000` once a terminal status (`completed` or `failed`) has been delivered.
+
+Example payload:
+
+```json
+{
+  "type": "update",
+  "task_id": "0a89f0bd-7ec9-43cf-a2e4-1d5f5df45a7a",
+  "sequence": 3,
+  "status": "processing",
+  "terminal": false,
+  "prompt": "Generate via websocket",
+  "parameters": {"width": 512},
+  "created_at": "2023-10-30T10:15:31.762Z",
+  "updated_at": "2023-10-30T10:16:05.114Z",
+  "sent_at": "2023-10-30T10:16:05.200Z"
+}
+```
+
+#### Publishing from backend components
+
+Use the `TaskStatusBroadcaster` helper whenever a worker or API endpoint mutates a task record. The broadcaster
+persists the latest payload in Redis (with a TTL for cleanup) and delivers it over the `tasks:{task_id}` pub/sub
+channel:
+
+```python
+from backend.generation.broadcaster import TaskStatusBroadcaster
+
+broadcaster = TaskStatusBroadcaster(redis_client)
+await broadcaster.publish(task)
+```
+
+#### Frontend example
+
+```javascript
+const ws = new WebSocket(`ws://${location.host}/ws/tasks/${taskId}`);
+ws.onopen = () => console.log('task stream connected');
+ws.onmessage = (event) => {
+  const payload = JSON.parse(event.data);
+  if (payload.type === 'heartbeat') {
+    return;
+  }
+  renderTaskStatus(payload);
+};
+ws.onclose = (event) => {
+  console.log('Task stream closed', event.code);
+};
+```
+
 main
 main

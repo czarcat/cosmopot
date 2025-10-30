@@ -5,7 +5,7 @@ from typing import Any
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from pydantic import ValidationError
 
 try:  # pragma: no cover - fallback when prometheus_client is unavailable
@@ -33,6 +33,7 @@ from backend.api.schemas.generation import (
 from backend.core.config import Settings, get_settings
 from backend.db.dependencies import get_db_session
 from backend.generation.enums import GenerationEventType, GenerationTaskStatus
+from backend.generation.models import GenerationTask
 from backend.generation.repository import add_event, create_task, get_task_by_id
 from backend.generation.service import GenerationService, resolve_priority
 from user_service.enums import SubscriptionStatus
@@ -101,6 +102,22 @@ def _content_type_extension(upload: UploadFile) -> tuple[str, str]:
     return content_type, _ALLOWS[content_type]
 
 
+async def _broadcast_task_update(request: Request, task: GenerationTask) -> None:
+    broadcaster = getattr(request.app.state, "task_broadcaster", None)
+    if broadcaster is None:
+        logger.warning("task_broadcaster_unavailable", task_id=str(task.id))
+        return
+
+    try:
+        await broadcaster.publish(task)
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.warning(
+            "task_status_broadcast_failed",
+            task_id=str(task.id),
+            error=str(exc),
+        )
+
+
 @router.post(
     "/generate",
     status_code=status.HTTP_202_ACCEPTED,
@@ -115,6 +132,7 @@ async def submit_generation_task(
         alias="parameters",
     ),
     file: UploadFile = File(..., description="Input image seed"),
+    request: Request,
     session: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
@@ -221,6 +239,7 @@ async def submit_generation_task(
         )
 
         await session.commit()
+        await session.refresh(task)
     except HTTPException:
         await session.rollback()
         raise
@@ -234,6 +253,8 @@ async def submit_generation_task(
         )
         _GENERATION_REQUESTS.labels(outcome="error").inc()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to enqueue generation task") from exc
+
+    await _broadcast_task_update(request, task)
 
     _GENERATION_REQUESTS.labels(outcome="success").inc()
     _GENERATION_ENQUEUED.inc()

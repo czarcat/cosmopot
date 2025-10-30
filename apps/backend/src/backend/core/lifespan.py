@@ -11,6 +11,7 @@ from backend.auth.rate_limiter import RateLimiter
 from backend.core.config import Settings
 from backend.core.redis import close_redis, init_redis
 from backend.db.session import dispose_engine, get_engine
+from backend.generation.broadcaster import TaskStatusBroadcaster
 
 
 def create_lifespan(settings: Settings) -> Lifespan[FastAPI]:
@@ -23,6 +24,7 @@ def create_lifespan(settings: Settings) -> Lifespan[FastAPI]:
         get_engine(settings)
         redis = await init_redis(settings)
         app.state.redis = redis
+        app.state.task_broadcaster = TaskStatusBroadcaster(redis)
         app.state.rate_limiter = RateLimiter(
             redis,
             limit=settings.rate_limit.requests_per_minute,
@@ -33,6 +35,7 @@ def create_lifespan(settings: Settings) -> Lifespan[FastAPI]:
             yield
         finally:
             app.state.rate_limiter = None
+            app.state.task_broadcaster = None
             await close_redis()
             await dispose_engine()
             logger.info("application_shutdown")
