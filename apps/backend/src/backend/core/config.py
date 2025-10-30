@@ -81,6 +81,71 @@ class RedisSettings(BaseModel):
     )
 
 
+class S3Settings(BaseModel):
+    """Amazon S3 compatible object storage configuration."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    bucket: str = Field(
+        default="generation-inputs",
+        min_length=3,
+        validation_alias=AliasChoices(
+            "S3__BUCKET",
+            "s3__bucket",
+            "S3_BUCKET",
+            "storage__bucket",
+        ),
+    )
+    region: str = Field(
+        default="us-east-1",
+        min_length=1,
+        validation_alias=AliasChoices(
+            "S3__REGION",
+            "s3__region",
+            "S3_REGION",
+            "storage__region",
+        ),
+    )
+    endpoint_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "S3__ENDPOINT_URL",
+            "s3__endpoint_url",
+            "S3_ENDPOINT_URL",
+            "storage__endpoint_url",
+        ),
+    )
+    access_key_id: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "S3__ACCESS_KEY_ID",
+            "s3__access_key_id",
+            "S3_ACCESS_KEY_ID",
+            "storage__access_key_id",
+        ),
+    )
+    secret_access_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "S3__SECRET_ACCESS_KEY",
+            "s3__secret_access_key",
+            "S3_SECRET_ACCESS_KEY",
+            "storage__secret_access_key",
+        ),
+    )
+    presign_ttl_seconds: int = Field(
+        default=1_800,
+        ge=60,
+        le=86_400,
+        validation_alias=AliasChoices(
+            "S3__PRESIGN_TTL_SECONDS",
+            "s3__presign_ttl_seconds",
+            "S3_PRESIGN_TTL_SECONDS",
+            "storage__presign_ttl_seconds",
+        ),
+    )
+
+
 class JWTSettings(BaseModel):
     """JWT issuance and cookie configuration."""
 
@@ -120,6 +185,66 @@ class RateLimitSettings(BaseModel):
         validation_alias=AliasChoices(
             "RATE_LIMIT__WINDOW_SECONDS",
             "rate_limit__window_seconds",
+        ),
+    )
+
+
+class RabbitMQSettings(BaseModel):
+    """Durable queue configuration for asynchronous task dispatch."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    url: str = Field(
+        default="amqp://guest:guest@localhost:5672/",
+        validation_alias=AliasChoices(
+            "RABBITMQ__URL",
+            "rabbitmq__url",
+            "RABBITMQ_URL",
+            "queue__url",
+        ),
+    )
+    exchange: str = Field(
+        default="generation",
+        min_length=1,
+        max_length=255,
+        validation_alias=AliasChoices(
+            "RABBITMQ__EXCHANGE",
+            "rabbitmq__exchange",
+            "RABBITMQ_EXCHANGE",
+            "queue__exchange",
+        ),
+    )
+    queue: str = Field(
+        default="generation",
+        min_length=1,
+        max_length=255,
+        validation_alias=AliasChoices(
+            "RABBITMQ__QUEUE",
+            "rabbitmq__queue",
+            "RABBITMQ_QUEUE",
+            "queue__queue",
+        ),
+    )
+    routing_key: str = Field(
+        default="generation",
+        min_length=1,
+        max_length=255,
+        validation_alias=AliasChoices(
+            "RABBITMQ__ROUTING_KEY",
+            "rabbitmq__routing_key",
+            "RABBITMQ_ROUTING_KEY",
+            "queue__routing_key",
+        ),
+    )
+    max_priority: int = Field(
+        default=10,
+        ge=1,
+        le=10,
+        validation_alias=AliasChoices(
+            "RABBITMQ__MAX_PRIORITY",
+            "rabbitmq__max_priority",
+            "RABBITMQ_MAX_PRIORITY",
+            "queue__max_priority",
         ),
     )
 
@@ -247,8 +372,10 @@ class Settings(BaseSettings):
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
 feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
     redis: RedisSettings = Field(default_factory=RedisSettings)
+    s3: S3Settings = Field(default_factory=S3Settings)
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     rate_limit: RateLimitSettings = Field(default_factory=RateLimitSettings)
+    rabbitmq: RabbitMQSettings = Field(default_factory=RabbitMQSettings)
     payments: PaymentsSettings = Field(default_factory=PaymentsSettings)
     yookassa: YooKassaSettings = Field(default_factory=YooKassaSettings)
 
