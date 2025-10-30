@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import (
     BigInteger,
@@ -16,6 +16,7 @@ from sqlalchemy import (
     JSON,
     Numeric,
     String,
+    Text,
     UniqueConstraint,
     func,
     text,
@@ -23,7 +24,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from .enums import (
+    GenerationTaskSource,
+    GenerationTaskStatus,
     PaymentStatus,
+    PromptSource,
     SubscriptionStatus,
     SubscriptionTier,
     TransactionType,
@@ -119,6 +123,9 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
     transactions: Mapped[List["Transaction"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan", passive_deletes=True
+    )
+    generation_tasks: Mapped[List["GenerationTask"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
 
@@ -361,3 +368,95 @@ Index(
     sqlite_where=text("provider_reference IS NOT NULL"),
     postgresql_where=text("provider_reference IS NOT NULL"),
 )
+
+
+class Prompt(Base):
+    """Describes a reusable prompt template for generation tasks."""
+
+    __tablename__ = "prompts"
+    __table_args__ = (UniqueConstraint("slug", name="uq_prompts_slug"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    slug: Mapped[str] = mapped_column(String(120), nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    source: Mapped[PromptSource] = mapped_column(
+        Enum(PromptSource, name="prompt_source", native_enum=False),
+        nullable=False,
+        default=PromptSource.SYSTEM,
+        server_default=text("'system'"),
+    )
+    parameters: Mapped[Dict[str, Any]] = mapped_column(
+        JSON, nullable=False, default=dict, server_default=text("'{}'")
+    )
+    preview_asset_url: Mapped[Optional[str]] = mapped_column(String(2048))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    tasks: Mapped[List["GenerationTask"]] = relationship(
+        back_populates="prompt",
+        passive_deletes=True,
+    )
+
+
+class GenerationTask(Base):
+    """Tracks the lifecycle and artifacts of a generation request."""
+
+    __tablename__ = "generation_tasks"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    prompt_id: Mapped[int] = mapped_column(
+        ForeignKey("prompts.id", ondelete="CASCADE"), nullable=False
+    )
+    status: Mapped[GenerationTaskStatus] = mapped_column(
+        Enum(GenerationTaskStatus, name="generation_task_status", native_enum=False),
+        nullable=False,
+        default=GenerationTaskStatus.PENDING,
+        server_default=text("'pending'"),
+    )
+    source: Mapped[GenerationTaskSource] = mapped_column(
+        Enum(GenerationTaskSource, name="generation_task_source", native_enum=False),
+        nullable=False,
+        default=GenerationTaskSource.API,
+        server_default=text("'api'"),
+    )
+    parameters: Mapped[Dict[str, Any]] = mapped_column(
+        JSON, nullable=False, default=dict, server_default=text("'{}'")
+    )
+    result_parameters: Mapped[Dict[str, Any]] = mapped_column(
+        JSON, nullable=False, default=dict, server_default=text("'{}'")
+    )
+    input_asset_url: Mapped[Optional[str]] = mapped_column(String(2048))
+    result_asset_url: Mapped[Optional[str]] = mapped_column(String(2048))
+    error: Mapped[Optional[str]] = mapped_column(String(500))
+    queued_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    prompt: Mapped[Prompt] = relationship(back_populates="tasks")
+    user: Mapped[User] = relationship(back_populates="generation_tasks")
+
+
+Index("ix_prompts_slug", Prompt.slug, unique=True)
+Index(
+    "ix_generation_tasks_user_status",
+    GenerationTask.user_id,
+    GenerationTask.status,
+)
+Index("ix_generation_tasks_prompt_id", GenerationTask.prompt_id)
