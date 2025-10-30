@@ -1,13 +1,21 @@
 from __future__ import annotations
 
-from celery import Celery
+import asyncio
 
-from .config import settings
+from celery import Celery
+from celery import signals
+
+from .worker.bootstrap import initialise, shutdown
+from .worker.config import WorkerSettings
+from .worker.logging import configure_logging
+
+_worker_settings = WorkerSettings()
+configure_logging(_worker_settings.log_level)
 
 celery_app = Celery(
-    "devstack",
-    broker=settings.celery_broker_url,
-    backend=settings.celery_result_backend,
+    "generation_worker",
+    broker=_worker_settings.celery_broker_url,
+    backend=_worker_settings.celery_result_backend,
     include=["app.tasks"],
 )
 
@@ -20,4 +28,26 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     task_track_started=True,
+    worker_concurrency=4,
+    worker_prefetch_multiplier=1,
+    task_acks_late=True,
+    task_reject_on_worker_lost=True,
+    broker_connection_retry_on_startup=True,
+    task_default_queue="generation.tasks",
+    task_default_delivery_mode="transient",
+    worker_hijack_root_logger=False,
 )
+
+celery_app.conf.task_routes = {
+    "app.tasks.process_generation_task": {"queue": "generation.tasks"},
+}
+
+
+@signals.worker_init.connect
+def _on_worker_init(**_: object) -> None:
+    asyncio.run(initialise())
+
+
+@signals.worker_shutdown.connect
+def _on_worker_shutdown(**_: object) -> None:
+    asyncio.run(shutdown())
