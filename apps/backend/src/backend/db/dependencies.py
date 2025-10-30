@@ -13,4 +13,6 @@ async def get_db_session() -> AsyncIterator[AsyncSession]:
         try:
             yield session
         finally:
-            await session.rollback()
+            transaction = session.get_transaction()
+            if transaction is not None and transaction.is_active:
+                await session.rollback()
