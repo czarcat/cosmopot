@@ -1,101 +1,69 @@
-p0-user-models-migration-pydantic-repo-tests
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "user-service"
+name = "platform"
 version = "0.1.0"
-description = "User domain models, DTOs, and repositories"
+description = "Monorepo containing backend, bot, and shared user services."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "SQLAlchemy>=2.0",
+    "sqlalchemy[asyncio]>=2.0",
     "pydantic>=2.4",
+    "pydantic-settings>=2.0",
     "alembic>=1.12",
     "aiosqlite>=0.19",
-    "pytest>=7.4",
-    "pytest-asyncio>=0.23",
-    "celery>=5.3",
-    "redis>=5.0",
-    "structlog>=23.1",
+    "fastapi>=0.104",
+    "uvicorn[standard]>=0.23",
     "httpx>=0.24",
+    "structlog>=23.1",
+    "redis>=5.0",
+    "fakeredis>=2.19",
+    "celery>=5.3",
+    "argon2-cffi>=23.1",
+    "PyJWT>=2.8",
+    "yookassa>=3.0",
+    "greenlet>=3.0",
+    "orjson>=3.9",
     "Pillow>=10.0",
     "minio>=7.1",
-]
-
-[build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-pythonpath = ["src"]
-
-[tool.mypy]
-python_version = "3.11"
-packages = ["user_service"]
-warn_unused_configs = true
-warn_unused_ignores = true
-strict_optional = true
-no_implicit_optional = true
-warn_return_any = true
-disallow_untyped_defs = true
-check_untyped_defs = true
-mypy_path = "src"
-
-[tool.pydantic-mypy]
-init_typed = true
-warn_untyped_fields = true
-
-[build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "backend"
-version = "0.1.0"
-description = "Backend service scaffolded with FastAPI, SQLAlchemy, and Alembic"
-requires-python = ">=3.11"
-readme = "README.md"
-dependencies = [
-  "fastapi>=0.104",
-  "uvicorn[standard]>=0.23",
-  "pydantic>=2.4",
-  "pydantic-settings>=2.0",
-  "sqlalchemy[asyncio]>=2.0",
-  "asyncpg>=0.28",
-  "alembic>=1.12",
-  "structlog>=23.1",
-  "orjson>=3.9",
-  "greenlet>=3.0",
-feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
-  "redis>=5.0",
-  "argon2-cffi>=23.1",
-
-main
-  "PyJWT>=2.8",
-  "yookassa>=3.0",
+    "aiogram>=3.2",
+    "pytest>=7.4",
+    "pytest-asyncio>=0.23",
 ]
 
 [project.optional-dependencies]
 dev = [
-  "black>=23.9",
-  "coverage[toml]>=7.3",
-  "mypy>=1.5",
-  "pytest>=7.4",
-  "pytest-asyncio>=0.21",
-  "pytest-cov>=4.1",
-  "ruff>=0.1.5",
-  "types-structlog>=0.6.0.7",
-  "httpx>=0.24",
-  "fakeredis>=2.19",
+    "black>=23.9",
+    "coverage[toml]>=7.3",
+    "mypy>=1.5",
+    "pytest-cov>=4.1",
+    "ruff>=0.1.5",
+    "types-structlog>=0.6.0.7",
 ]
 
-[tool.setuptools.package-dir]
-"" = "apps/backend/src"
-
 [tool.setuptools.packages.find]
-where = ["apps/backend/src"]
+where = ["src", "apps/backend/src", "apps/bot/src"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests", "apps/backend/tests", "apps/bot/tests"]
+addopts = "-q --disable-warnings --maxfail=1 --cov=backend --cov=bot --cov=user_service --cov-report=term-missing:skip-covered"
+asyncio_mode = "auto"
+pythonpath = ["src", "apps/backend/src", "apps/bot/src"]
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["pydantic.mypy"]
+strict = true
+warn_unused_configs = true
+mypy_path = ["src", "apps/backend/src", "apps/bot/src"]
+
+[tool.pydantic-mypy]
+init_typed = true
+warn_untyped_fields = true
 
 [tool.black]
 line-length = 88
@@ -104,7 +72,7 @@ target-version = ["py311"]
 [tool.ruff]
 line-length = 88
 target-version = "py311"
-src = ["apps/backend/src", "apps/backend/tests"]
+src = ["apps/backend/src", "apps/backend/tests", "apps/bot/src", "apps/bot/tests", "src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "B", "Q", "I", "UP", "ASYNC"]
@@ -115,25 +83,11 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 
-[tool.mypy]
-python_version = "3.11"
-plugins = ["pydantic.mypy"]
-strict = true
-warn_unused_configs = true
-mypy_path = ["apps/backend/src"]
-
-[tool.pytest.ini_options]
-minversion = "7.0"
-testpaths = ["apps/backend/tests"]
-addopts = "-q --disable-warnings --maxfail=1 --cov=backend --cov-report=term-missing:skip-covered"
-asyncio_mode = "auto"
-
 [tool.coverage.run]
-source = ["backend"]
+source = ["backend", "bot", "user_service"]
 branch = true
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
 precision = 2
-main
