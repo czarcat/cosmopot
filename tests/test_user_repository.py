@@ -11,7 +11,7 @@ from user_service.models import UserProfile
 from user_service.repository import (
     create_profile,
     create_session,
-    create_subscription,
+    create_subscription_plan,
     create_user,
     get_profile_by_user_id,
     get_user_by_email,
@@ -100,7 +100,9 @@ async def test_session_service_lifecycle(session_factory: async_sessionmaker[Asy
 @pytest.mark.asyncio
 async def test_cascade_delete_user(session_factory: async_sessionmaker[AsyncSession]) -> None:
     async with session_factory() as session:
-        subscription = await create_subscription(session, "Pro", "gold", Decimal("19.99"))
+        subscription = await create_subscription_plan(
+            session, "Pro", "gold", Decimal("19.99")
+        )
         user = await create_user(
             session,
             user_create_factory(email="cascade@example.com"),

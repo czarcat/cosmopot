@@ -8,8 +8,21 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from .models import Subscription, User, UserProfile, UserSession
+from .enums import PaymentStatus, SubscriptionStatus, SubscriptionTier, TransactionType
+from .models import (
+    Payment,
+    Subscription,
+    SubscriptionHistory,
+    SubscriptionPlan,
+    Transaction,
+    User,
+    UserProfile,
+    UserSession,
+)
 from .schemas import (
+    PaymentCreate,
+    SubscriptionCreate,
+    TransactionCreate,
     UserCreate,
     UserProfileCreate,
     UserProfileUpdate,
@@ -51,7 +64,8 @@ async def get_user_with_related(session: AsyncSession, user_id: int) -> Optional
         .options(
             joinedload(User.profile),
             joinedload(User.sessions),
-            joinedload(User.subscription),
+            joinedload(User.subscription_plan),
+            joinedload(User.subscriptions),
         )
         .where(User.id == user_id)
     )
@@ -97,18 +111,18 @@ async def hard_delete_user(session: AsyncSession, user: User) -> None:
     await session.flush()
 
 
-async def create_subscription(
+async def create_subscription_plan(
     session: AsyncSession, name: str, level: str, monthly_cost: Decimal
-) -> Subscription:
-    subscription = Subscription(
+) -> SubscriptionPlan:
+    plan = SubscriptionPlan(
         name=name,
         level=level,
         monthly_cost=Decimal(monthly_cost).quantize(Decimal("0.01")),
     )
-    session.add(subscription)
+    session.add(plan)
     await session.flush()
-    await session.refresh(subscription)
-    return subscription
+    await session.refresh(plan)
+    return plan
 
 
 async def create_profile(session: AsyncSession, data: UserProfileCreate) -> UserProfile:
@@ -174,3 +188,99 @@ async def expire_session(session: AsyncSession, session_token: str) -> Optional[
     await session.flush()
     await session.refresh(user_session)
     return user_session
+
+
+async def create_subscription(
+    session: AsyncSession, data: SubscriptionCreate
+) -> Subscription:
+    """Persist a new subscription record for a user."""
+
+    payload = data.model_dump()
+    payload["tier"] = SubscriptionTier(payload["tier"])
+    payload["status"] = SubscriptionStatus(payload["status"])
+    payload["provider_data"] = dict(payload.get("provider_data") or {})
+    payload["metadata"] = dict(payload.get("metadata") or {})
+
+    subscription = Subscription(**payload)
+    session.add(subscription)
+    await session.flush()
+    await session.refresh(subscription)
+    return subscription
+
+
+async def get_subscription_by_id(
+    session: AsyncSession, subscription_id: int
+) -> Optional[Subscription]:
+    stmt = select(Subscription).where(Subscription.id == subscription_id)
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none()
+
+
+async def create_subscription_history_snapshot(
+    session: AsyncSession,
+    subscription: Subscription,
+    *,
+    reason: Optional[str] = None,
+) -> SubscriptionHistory:
+    """Capture the current state of a subscription in the history table."""
+
+    snapshot = SubscriptionHistory(
+        subscription_id=subscription.id,
+        tier=subscription.tier,
+        status=subscription.status,
+        auto_renew=subscription.auto_renew,
+        quota_limit=subscription.quota_limit,
+        quota_used=subscription.quota_used,
+        provider_subscription_id=subscription.provider_subscription_id,
+        provider_data=dict(subscription.provider_data or {}),
+        metadata=dict(subscription.metadata or {}),
+        current_period_start=subscription.current_period_start,
+        current_period_end=subscription.current_period_end,
+        reason=reason,
+    )
+    session.add(snapshot)
+    await session.flush()
+    await session.refresh(snapshot)
+    return snapshot
+
+
+async def increment_subscription_usage(
+    session: AsyncSession, subscription: Subscription, amount: int
+) -> Subscription:
+    """Accumulate usage against the subscription's quota within a transaction."""
+
+    if amount < 0:
+        raise ValueError("amount must be non-negative")
+    updated = subscription.quota_used + amount
+    if updated > subscription.quota_limit:
+        raise ValueError("quota usage exceeds configured limit")
+    subscription.quota_used = updated
+    await session.flush()
+    await session.refresh(subscription)
+    return subscription
+
+
+async def create_payment(session: AsyncSession, data: PaymentCreate) -> Payment:
+    payload = data.model_dump()
+    payload["status"] = PaymentStatus(payload["status"])
+    payload["provider_data"] = dict(payload.get("provider_data") or {})
+    payload["metadata"] = dict(payload.get("metadata") or {})
+    payment = Payment(**payload)
+    session.add(payment)
+    await session.flush()
+    await session.refresh(payment)
+    return payment
+
+
+async def create_transaction(
+    session: AsyncSession, *, payment_id: int, data: TransactionCreate
+) -> Transaction:
+    payload = data.model_dump()
+    payload["payment_id"] = payment_id
+    payload["type"] = TransactionType(payload["type"])
+    payload["metadata"] = dict(payload.get("metadata") or {})
+    transaction = Transaction(**payload)
+    session.add(transaction)
+    await session.flush()
+    await session.refresh(transaction)
+    return transaction
