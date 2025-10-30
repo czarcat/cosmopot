@@ -1,17 +1,17 @@
 # User Domain Entity Overview
 
 ```
-+-----------------+           +--------------------+
-|  subscriptions  |<---+     |     user_profiles  |
-|-----------------|    |     |--------------------|
-| id (PK)         |    |     | id (PK)            |
-| name (UNIQUE)   |    |     | user_id (FK, uniq) |
-| level           |    +-----| telegram_id (uniq) |
-| monthly_cost    |          | ...                |
-| created_at      |          | created_at         |
-| updated_at      |          | updated_at         |
-+-----------------+          | deleted_at         |
-                             +---------^----------+
++------------------------+     +--------------------+
+|  subscription_plans  |<---+     |     user_profiles  |
+|----------------------|    |     |--------------------|
+| id (PK)              |    |     | id (PK)            |
+| name (UNIQUE)        |    |     | user_id (FK, uniq) |
+| level                |    +-----| telegram_id (uniq) |
+| monthly_cost         |          | ...                |
+| created_at           |          | created_at         |
+| updated_at           |          | updated_at         |
++----------------------+          | deleted_at         |
+                                  +---------^----------+
                                        |
                                        |
 +-----------------+           +--------+----------+
@@ -30,7 +30,7 @@
 +-----------------+
 ```
 
-* **Subscriptions** represent purchasable plans. Users may reference a subscription, and the reference is nulled if the subscription is removed.
+* **Subscription Plans** represent purchasable tiers. Users may reference a plan, and the reference is nulled if the plan is removed.
 * **Users** own a single profile and many sessions. Soft deletion is handled via `deleted_at`.
 * **User Profiles** extend the main user entity with optional contact data. The `telegram_id` column is globally unique.
 * **User Sessions** track issued auth tokens, cascading away when the owning user is deleted.
