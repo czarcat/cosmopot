@@ -62,6 +62,7 @@ dependencies = [
   "structlog>=23.1",
   "orjson>=3.9",
   "greenlet>=3.0",
+  "PyJWT>=2.8",
 ]
 
 [project.optional-dependencies]

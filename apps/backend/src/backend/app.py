@@ -48,6 +48,7 @@ def create_app() -> FastAPI:
     app.state.settings = settings
     app.openapi_tags = [
         {"name": "health", "description": "Service health check operations"},
+        {"name": "auth", "description": "Authentication operations"},
     ]
 
     _register_middlewares(app, settings)

@@ -94,6 +94,54 @@ class Settings(BaseSettings):
     cors_allow_origins: list[str] = Field(default_factory=list)
 
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
+    telegram_bot_token: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "TELEGRAM__BOT_TOKEN",
+            "telegram__bot_token",
+            "TELEGRAM_BOT_TOKEN",
+        ),
+    )
+    telegram_login_ttl_seconds: int = Field(
+        default=86_400,
+        ge=60,
+        validation_alias=AliasChoices(
+            "TELEGRAM__LOGIN_TTL_SECONDS",
+            "telegram__login_ttl_seconds",
+            "TELEGRAM_LOGIN_TTL_SECONDS",
+        ),
+    )
+    jwt_secret_key: SecretStr = Field(
+        default=SecretStr("change-me"),
+        validation_alias=AliasChoices(
+            "JWT__SECRET_KEY",
+            "jwt__secret_key",
+            "JWT_SECRET_KEY",
+            "SECURITY__JWT_SECRET_KEY",
+            "security__jwt_secret_key",
+        ),
+    )
+    jwt_algorithm: str = Field(
+        default="HS256",
+        validation_alias=AliasChoices(
+            "JWT__ALGORITHM",
+            "jwt__algorithm",
+            "JWT_ALGORITHM",
+            "SECURITY__JWT_ALGORITHM",
+            "security__jwt_algorithm",
+        ),
+    )
+    jwt_access_ttl_seconds: int = Field(
+        default=3_600,
+        ge=60,
+        validation_alias=AliasChoices(
+            "JWT__ACCESS_TTL_SECONDS",
+            "jwt__access_ttl_seconds",
+            "JWT_ACCESS_TTL_SECONDS",
+            "SECURITY__JWT_ACCESS_TTL_SECONDS",
+            "security__jwt_access_ttl_seconds",
+        ),
+    )
 
     @model_validator(mode="after")
     def _normalize(self) -> "Settings":
