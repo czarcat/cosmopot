@@ -46,3 +46,30 @@ class TransactionType(StrEnum):
     CHARGE = "charge"
     REFUND = "refund"
     CREDIT = "credit"
+
+
+class PromptSource(StrEnum):
+    """Origin for prompt templates."""
+
+    SYSTEM = "system"
+    USER = "user"
+    EXTERNAL = "external"
+
+
+class GenerationTaskStatus(StrEnum):
+    """Lifecycle states for content generation tasks."""
+
+    PENDING = "pending"
+    QUEUED = "queued"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    CANCELED = "canceled"
+
+
+class GenerationTaskSource(StrEnum):
+    """Indicates how a generation task was initiated."""
+
+    API = "api"
+    SCHEDULER = "scheduler"
+    WORKFLOW = "workflow"

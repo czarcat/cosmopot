@@ -2,15 +2,25 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from .enums import PaymentStatus, SubscriptionStatus, SubscriptionTier, TransactionType
+from .enums import (
+    GenerationTaskSource,
+    GenerationTaskStatus,
+    PaymentStatus,
+    PromptSource,
+    SubscriptionStatus,
+    SubscriptionTier,
+    TransactionType,
+)
 from .models import (
+    GenerationTask,
     Payment,
+    Prompt,
     Subscription,
     SubscriptionHistory,
     SubscriptionPlan,
@@ -20,7 +30,11 @@ from .models import (
     UserSession,
 )
 from .schemas import (
+    GenerationTaskCreate,
+    GenerationTaskFailureUpdate,
+    GenerationTaskResultUpdate,
     PaymentCreate,
+    PromptCreate,
     SubscriptionCreate,
     TransactionCreate,
     UserCreate,
@@ -284,3 +298,144 @@ async def create_transaction(
     await session.flush()
     await session.refresh(transaction)
     return transaction
+
+
+async def create_prompt(session: AsyncSession, data: PromptCreate) -> Prompt:
+    """Persist a prompt template definition."""
+
+    payload = data.model_dump()
+    payload["source"] = PromptSource(payload["source"])
+    payload["parameters"] = dict(payload.get("parameters") or {})
+
+    prompt = Prompt(**payload)
+    session.add(prompt)
+    await session.flush()
+    await session.refresh(prompt)
+    return prompt
+
+
+async def get_prompt_by_slug(session: AsyncSession, slug: str) -> Optional[Prompt]:
+    stmt = select(Prompt).where(Prompt.slug == slug)
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none()
+
+
+async def create_generation_task(
+    session: AsyncSession, data: GenerationTaskCreate
+) -> GenerationTask:
+    """Create a generation task tied to a user and prompt."""
+
+    payload = data.model_dump()
+    payload["status"] = GenerationTaskStatus(payload["status"])
+    payload["source"] = GenerationTaskSource(payload["source"])
+    payload["parameters"] = dict(payload.get("parameters") or {})
+    payload["result_parameters"] = dict(payload.get("result_parameters") or {})
+
+    task = GenerationTask(**payload)
+    session.add(task)
+    await session.flush()
+    await session.refresh(task)
+    return task
+
+
+async def get_generation_task_by_id(
+    session: AsyncSession, task_id: int
+) -> Optional[GenerationTask]:
+    stmt = select(GenerationTask).where(GenerationTask.id == task_id)
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none()
+
+
+def _ensure_transition_allowed(task: GenerationTask) -> None:
+    if task.status in {
+        GenerationTaskStatus.SUCCEEDED,
+        GenerationTaskStatus.FAILED,
+        GenerationTaskStatus.CANCELED,
+    }:
+        raise ValueError("task is in a terminal state")
+
+
+async def mark_generation_task_queued(
+    session: AsyncSession, task: GenerationTask
+) -> GenerationTask:
+    """Mark a pending task as queued for processing."""
+
+    _ensure_transition_allowed(task)
+    now = datetime.now(timezone.utc)
+    if task.status != GenerationTaskStatus.QUEUED:
+        task.status = GenerationTaskStatus.QUEUED
+    if task.queued_at is None:
+        task.queued_at = now
+    await session.flush()
+    await session.refresh(task)
+    return task
+
+
+async def mark_generation_task_started(
+    session: AsyncSession, task: GenerationTask
+) -> GenerationTask:
+    """Mark a queued task as actively running."""
+
+    _ensure_transition_allowed(task)
+    now = datetime.now(timezone.utc)
+    task.status = GenerationTaskStatus.RUNNING
+    if task.queued_at is None:
+        task.queued_at = now
+    task.started_at = now
+    await session.flush()
+    await session.refresh(task)
+    return task
+
+
+async def mark_generation_task_succeeded(
+    session: AsyncSession,
+    task: GenerationTask,
+    data: GenerationTaskResultUpdate,
+) -> GenerationTask:
+    """Mark a running task as succeeded and persist resulting artifacts."""
+
+    _ensure_transition_allowed(task)
+    if task.status not in {
+        GenerationTaskStatus.RUNNING,
+        GenerationTaskStatus.QUEUED,
+        GenerationTaskStatus.PENDING,
+    }:
+        raise ValueError("task must be running or queued to complete")
+
+    now = datetime.now(timezone.utc)
+    updates = data.model_dump(exclude_unset=True)
+
+    task.status = GenerationTaskStatus.SUCCEEDED
+    task.error = None
+    task.completed_at = now
+    task.result_asset_url = updates.get("result_asset_url", task.result_asset_url)
+    if "result_parameters" in updates:
+        task.result_parameters = dict(updates["result_parameters"] or {})
+
+    await session.flush()
+    await session.refresh(task)
+    return task
+
+
+async def mark_generation_task_failed(
+    session: AsyncSession,
+    task: GenerationTask,
+    data: GenerationTaskFailureUpdate,
+) -> GenerationTask:
+    """Mark a task as failed with an error message."""
+
+    _ensure_transition_allowed(task)
+
+    now = datetime.now(timezone.utc)
+    updates = data.model_dump(exclude_unset=True)
+
+    task.status = GenerationTaskStatus.FAILED
+    task.error = updates["error"]
+    task.completed_at = now
+    task.result_asset_url = updates.get("result_asset_url", task.result_asset_url)
+    if "result_parameters" in updates:
+        task.result_parameters = dict(updates["result_parameters"] or {})
+
+    await session.flush()
+    await session.refresh(task)
+    return task

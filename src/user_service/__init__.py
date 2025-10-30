@@ -1,7 +1,10 @@
 """User domain package providing models, schemas, repositories, and services."""
 
 from .enums import (
+    GenerationTaskSource,
+    GenerationTaskStatus,
     PaymentStatus,
+    PromptSource,
     SubscriptionStatus,
     SubscriptionTier,
     TransactionType,
@@ -9,7 +12,9 @@ from .enums import (
 )
 from .models import (
     Base,
+    GenerationTask,
     Payment,
+    Prompt,
     Subscription,
     SubscriptionHistory,
     SubscriptionPlan,
@@ -21,7 +26,9 @@ from .models import (
 
 __all__ = [
     "Base",
+    "GenerationTask",
     "Payment",
+    "Prompt",
     "Subscription",
     "SubscriptionHistory",
     "SubscriptionPlan",
@@ -29,7 +36,10 @@ __all__ = [
     "User",
     "UserProfile",
     "UserSession",
+    "GenerationTaskSource",
+    "GenerationTaskStatus",
     "PaymentStatus",
+    "PromptSource",
     "SubscriptionStatus",
     "SubscriptionTier",
     "TransactionType",

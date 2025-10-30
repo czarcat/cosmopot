@@ -7,7 +7,10 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from .enums import (
+    GenerationTaskSource,
+    GenerationTaskStatus,
     PaymentStatus,
+    PromptSource,
     SubscriptionStatus,
     SubscriptionTier,
     TransactionType,
@@ -17,6 +20,34 @@ from .enums import (
 
 def _quantize_two_places(value: Decimal) -> Decimal:
     return value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def _coerce_mapping(value: Any) -> Dict[str, Any]:
+    if value is None:
+        return {}
+    if isinstance(value, dict):
+        return dict(value)
+    raise ValueError("value must be a mapping")
+
+
+def _coerce_optional_mapping(value: Any) -> Optional[Dict[str, Any]]:
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        return dict(value)
+    raise ValueError("value must be a mapping")
+
+
+def _validate_s3_uri(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise TypeError("S3 URL must be a string")
+    if not value.startswith("s3://"):
+        raise ValueError("URL must use the s3:// scheme")
+    if len(value) <= 5:
+        raise ValueError("S3 URL must include a bucket and key")
+    return value
 
 
 class UserCreate(BaseModel):
@@ -255,3 +286,116 @@ class TransactionCreate(BaseModel):
     @classmethod
     def normalize_currency(cls, value: str) -> str:
         return value.upper()
+
+
+class PromptCreate(BaseModel):
+    slug: str = Field(..., min_length=1, max_length=120)
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = Field(None, max_length=1024)
+    source: PromptSource = PromptSource.SYSTEM
+    parameters: Dict[str, Any] = Field(default_factory=dict)
+    preview_asset_url: Optional[str] = None
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    @field_validator("parameters", mode="before")
+    @classmethod
+    def validate_parameters(cls, value: Any) -> Dict[str, Any]:
+        return _coerce_mapping(value)
+
+    @field_validator("preview_asset_url")
+    @classmethod
+    def validate_preview_url(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_s3_uri(value)
+
+
+class PromptRead(PromptCreate):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
+
+
+class GenerationTaskCreate(BaseModel):
+    user_id: int
+    prompt_id: int
+    status: GenerationTaskStatus = GenerationTaskStatus.PENDING
+    source: GenerationTaskSource = GenerationTaskSource.API
+    parameters: Dict[str, Any] = Field(default_factory=dict)
+    result_parameters: Dict[str, Any] = Field(default_factory=dict)
+    input_asset_url: Optional[str] = None
+    result_asset_url: Optional[str] = None
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    @field_validator("parameters", mode="before")
+    @classmethod
+    def validate_parameters(cls, value: Any) -> Dict[str, Any]:
+        return _coerce_mapping(value)
+
+    @field_validator("result_parameters", mode="before")
+    @classmethod
+    def validate_result_parameters(cls, value: Any) -> Dict[str, Any]:
+        return _coerce_mapping(value)
+
+    @field_validator("input_asset_url")
+    @classmethod
+    def validate_input_url(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_s3_uri(value)
+
+    @field_validator("result_asset_url")
+    @classmethod
+    def validate_result_url(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_s3_uri(value)
+
+
+class GenerationTaskRead(BaseModel):
+    id: int
+    user_id: int
+    prompt_id: int
+    status: GenerationTaskStatus
+    source: GenerationTaskSource
+    parameters: Dict[str, Any]
+    result_parameters: Dict[str, Any]
+    input_asset_url: Optional[str]
+    result_asset_url: Optional[str]
+    error: Optional[str]
+    queued_at: Optional[datetime]
+    started_at: Optional[datetime]
+    completed_at: Optional[datetime]
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
+
+
+class GenerationTaskResultUpdate(BaseModel):
+    result_asset_url: Optional[str] = None
+    result_parameters: Optional[Dict[str, Any]] = None
+
+    @field_validator("result_asset_url")
+    @classmethod
+    def validate_result_url(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_s3_uri(value)
+
+    @field_validator("result_parameters", mode="before")
+    @classmethod
+    def validate_result_parameters(cls, value: Any) -> Optional[Dict[str, Any]]:
+        return _coerce_optional_mapping(value)
+
+
+class GenerationTaskFailureUpdate(BaseModel):
+    error: str = Field(..., min_length=1, max_length=500)
+    result_asset_url: Optional[str] = None
+    result_parameters: Optional[Dict[str, Any]] = None
+
+    @field_validator("result_asset_url")
+    @classmethod
+    def validate_result_url(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_s3_uri(value)
+
+    @field_validator("result_parameters", mode="before")
+    @classmethod
+    def validate_result_parameters(cls, value: Any) -> Optional[Dict[str, Any]]:
+        return _coerce_optional_mapping(value)

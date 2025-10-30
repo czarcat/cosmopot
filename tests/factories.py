@@ -7,14 +7,21 @@ from secrets import token_hex
 from typing import Any, Dict, Optional
 
 from user_service.enums import (
+    GenerationTaskSource,
+    GenerationTaskStatus,
     PaymentStatus,
+    PromptSource,
     SubscriptionStatus,
     SubscriptionTier,
     TransactionType,
     UserRole,
 )
 from user_service.schemas import (
+    GenerationTaskCreate,
+    GenerationTaskFailureUpdate,
+    GenerationTaskResultUpdate,
     PaymentCreate,
+    PromptCreate,
     SubscriptionCreate,
     SubscriptionRenew,
     TransactionCreate,
@@ -160,4 +167,66 @@ def transaction_create_factory(
         description=description or "Test transaction",
         provider_reference=provider_reference or f"txn_{index}",
         metadata=metadata or {"note": "test-transaction"},
+    )
+
+
+def prompt_create_factory(
+    *,
+    slug: Optional[str] = None,
+    source: PromptSource = PromptSource.SYSTEM,
+    parameters: Optional[Dict[str, Any]] = None,
+) -> PromptCreate:
+    index = next(_counter)
+    return PromptCreate(
+        slug=slug or f"prompt-{index}",
+        name=f"Prompt {index}",
+        description="Default prompt used for tests",
+        source=source,
+        parameters=parameters or {"temperature": 0.5},
+        preview_asset_url=f"s3://prompts/{index}/preview.png",
+    )
+
+
+def generation_task_create_factory(
+    user_id: int,
+    prompt_id: int,
+    *,
+    status: GenerationTaskStatus = GenerationTaskStatus.PENDING,
+    source: GenerationTaskSource = GenerationTaskSource.API,
+    parameters: Optional[Dict[str, Any]] = None,
+) -> GenerationTaskCreate:
+    index = next(_counter)
+    return GenerationTaskCreate(
+        user_id=user_id,
+        prompt_id=prompt_id,
+        status=status,
+        source=source,
+        parameters=parameters or {"size": "1024x1024"},
+        result_parameters={},
+        input_asset_url=f"s3://tasks/{index}/input.json",
+        result_asset_url=None,
+    )
+
+
+def generation_task_result_update_factory(
+    *,
+    result_asset_url: Optional[str] = None,
+    result_parameters: Optional[Dict[str, Any]] = None,
+) -> GenerationTaskResultUpdate:
+    return GenerationTaskResultUpdate(
+        result_asset_url=result_asset_url or "s3://tasks/results/output.png",
+        result_parameters=result_parameters or {"duration": 1.23},
+    )
+
+
+def generation_task_failure_update_factory(
+    *,
+    error: str = "task failed",
+    result_asset_url: Optional[str] = None,
+    result_parameters: Optional[Dict[str, Any]] = None,
+) -> GenerationTaskFailureUpdate:
+    return GenerationTaskFailureUpdate(
+        error=error,
+        result_asset_url=result_asset_url or "s3://tasks/results/error.log",
+        result_parameters=result_parameters or {"retries": 3},
     )
