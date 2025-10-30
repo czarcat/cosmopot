@@ -58,7 +58,11 @@ def create_app() -> FastAPI:
     app.state.token_service = token_service
     app.openapi_tags = [
         {"name": "health", "description": "Service health check operations"},
+feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
         {"name": "auth", "description": "Authentication and session management"},
+
+        {"name": "auth", "description": "Authentication operations"},
+main
     ]
 
     _register_middlewares(app, settings, token_service)

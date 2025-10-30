@@ -62,8 +62,11 @@ dependencies = [
   "structlog>=23.1",
   "orjson>=3.9",
   "greenlet>=3.0",
+feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
   "redis>=5.0",
   "argon2-cffi>=23.1",
+
+main
   "PyJWT>=2.8",
 ]
 
