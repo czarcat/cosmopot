@@ -274,6 +274,39 @@ async def increment_subscription_usage(
     return subscription
 
 
+async def decrement_subscription_usage(
+    session: AsyncSession, subscription: Subscription, amount: int
+) -> Subscription:
+    """Reduce quota usage, clamping to zero to avoid negative values."""
+
+    if amount < 0:
+        raise ValueError("amount must be non-negative")
+    updated = subscription.quota_used - amount
+    if updated < 0:
+        updated = 0
+    subscription.quota_used = updated
+    await session.flush()
+    await session.refresh(subscription)
+    return subscription
+
+
+async def get_active_subscription_for_user(
+    session: AsyncSession, user_id: int
+) -> Optional[Subscription]:
+    stmt = (
+        select(Subscription)
+        .where(
+            Subscription.user_id == user_id,
+            Subscription.status.in_(
+                [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]
+            ),
+        )
+        .order_by(Subscription.current_period_end.desc())
+    )
+    result = await session.execute(stmt)
+    return result.scalars().first()
+
+
 async def create_payment(session: AsyncSession, data: PaymentCreate) -> Payment:
     payload = data.model_dump()
     payload["status"] = PaymentStatus(payload["status"])
