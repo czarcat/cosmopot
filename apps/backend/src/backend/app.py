@@ -48,10 +48,14 @@ def create_app() -> FastAPI:
     app.state.settings = settings
     app.openapi_tags = [
         {"name": "health", "description": "Service health check operations"},
+p0-feat-user-api-profile-rbac-sessions-balance-tests-openapi
         {
             "name": "users",
             "description": "User profile management, balance adjustments, session lifecycle, and GDPR stubs.",
         },
+
+        {"name": "auth", "description": "Authentication operations"},
+main
     ]
 
     _register_middlewares(app, settings)
