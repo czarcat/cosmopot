@@ -1,3 +1,37 @@
+p0-user-models-migration-pydantic-repo-tests
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.env
+.venv
+venv/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Mypy cache
+.mypy_cache/
+
+# Pytest cache
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage*
+
 # Python
 __pycache__/
 *.py[cod]
@@ -79,4 +113,5 @@ Thumbs.db
 # Local data
 *.sqlite3
 *.log
+main
 main
