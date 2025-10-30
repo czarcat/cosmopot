@@ -48,7 +48,11 @@ async def get_user_by_id(session: AsyncSession, user_id: int) -> Optional[User]:
 async def get_user_with_related(session: AsyncSession, user_id: int) -> Optional[User]:
     stmt = (
         select(User)
-        .options(joinedload(User.profile), joinedload(User.sessions))
+        .options(
+            joinedload(User.profile),
+            joinedload(User.sessions),
+            joinedload(User.subscription),
+        )
         .where(User.id == user_id)
     )
     result = await session.execute(stmt)
@@ -61,11 +65,22 @@ async def get_user_by_email(session: AsyncSession, email: str) -> Optional[User]
     return result.scalar_one_or_none()
 
 
-async def adjust_user_balance(session: AsyncSession, user: User, delta: Decimal) -> Decimal:
-    """Increment a user's balance by a delta amount."""
+async def adjust_user_balance(session: AsyncSession, user_id: int, delta: Decimal) -> Decimal:
+    """Increment a user's balance by a delta amount within a transaction."""
 
-    new_balance = (user.balance or Decimal("0")) + Decimal(delta)
-    user.balance = new_balance.quantize(Decimal("0.01"))
+    stmt = select(User).where(User.id == user_id).with_for_update()
+    result = await session.execute(stmt)
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise ValueError("user not found")
+
+    current_balance = user.balance or Decimal("0")
+    updated_balance = current_balance + Decimal(delta)
+    quantized = updated_balance.quantize(Decimal("0.01"))
+    if quantized < Decimal("0"):
+        raise ValueError("balance cannot be negative")
+
+    user.balance = quantized
     await session.flush()
     await session.refresh(user)
     return user.balance

@@ -39,7 +39,9 @@ async def update_user_details(
 async def adjust_balance_by(
     session: AsyncSession, user: User, delta: Decimal
 ) -> Decimal:
-    return await repository.adjust_user_balance(session, user, delta)
+    new_balance = await repository.adjust_user_balance(session, user.id, delta)
+    await session.refresh(user)
+    return new_balance
 
 
 async def soft_delete_account(session: AsyncSession, user: User) -> User:
