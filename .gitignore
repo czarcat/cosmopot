@@ -1,6 +1,52 @@
 # Python
 __pycache__/
 *.py[cod]
+feat/compose-dev-stack-p0
+*.pyo
+*.pyd
+*.so
+.Python
+build/
+dist/
+.eggs/
+*.egg-info/
+*.egg
+
+# Virtual environments
+.env
+.venv/
+venv/
+ENV/
+env.bak/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Docker artifacts
+*.log
+**/__pycache__/
+
+# Compose
+.env.local
+.env.development
+.env.production
+
+# Coverage / test
+.coverage
+htmlcov/
+pytest_cache/
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+
+# Ignore local overrides but keep shared env templates
+!.env.example
+!.env.docker
+
 *$py.class
 
 # Virtual environments
@@ -33,3 +79,4 @@ Thumbs.db
 # Local data
 *.sqlite3
 *.log
+main
