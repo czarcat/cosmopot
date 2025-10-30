@@ -1,3 +1,4 @@
+feat/compose-dev-stack-p0
 # Compose developer stack
 
 This repository ships a batteries-included Docker Compose stack for local development. It bundles the
@@ -147,3 +148,37 @@ The Sentry relay entrypoint renders a configuration file at runtime using the va
 
 This project is distributed under the MIT License. Modify and adapt the stack as needed for your
 engineering workflows.
+
+# Backend Service
+
+This repository contains a FastAPI-based backend scaffold with structured logging, async database
+support via SQLAlchemy, and Alembic migrations.
+
+## Development
+
+Install dependencies (development extras include linting and testing tools):
+
+```bash
+pip install -e .[dev]
+```
+
+Run the application locally:
+
+```bash
+uvicorn backend.main:app --reload
+```
+
+Or via Docker Compose (includes Postgres):
+
+```bash
+docker compose up --build
+```
+
+Execute the tests:
+
+```bash
+pytest
+```
+
+Additional tooling is configured via `pre-commit`, `ruff`, `black`, and `mypy` for quality gates.
+main

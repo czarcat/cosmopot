@@ -1,5 +1,6 @@
 version: "3.9"
 
+feat/compose-dev-stack-p0
 x-service-defaults: &service-defaults
   restart: unless-stopped
   env_file:
@@ -298,3 +299,45 @@ networks:
     driver: bridge
   monitoring:
     driver: bridge
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      DATABASE__HOST: db
+      DATABASE__PORT: "5432"
+      DATABASE__USER: postgres
+      DATABASE__PASSWORD: postgres
+      DATABASE__NAME: backend
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: backend
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+main

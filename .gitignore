@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.py[cod]
+feat/compose-dev-stack-p0
 *.pyo
 *.pyd
 *.so
@@ -45,3 +46,37 @@ pytest_cache/
 # Ignore local overrides but keep shared env templates
 !.env.example
 !.env.docker
+
+*$py.class
+
+# Virtual environments
+.venv/
+.env
+.env.*
+venv/
+
+# Tooling
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+coverage-html/
+htmlcov/
+.dmypy.json
+
+# Packaging
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local data
+*.sqlite3
+*.log
+main
