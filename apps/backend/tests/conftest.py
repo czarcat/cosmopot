@@ -10,6 +10,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 import backend.auth.models  # noqa: F401 - ensure models are registered with SQLAlchemy
+import backend.payments.models  # noqa: F401 - ensure payment models are registered
 from backend.app import create_app
 p0-feat-user-api-profile-rbac-sessions-balance-tests-openapi
 from backend.db.dependencies import get_db_session
@@ -18,6 +19,7 @@ from user_service.models import Base
 from backend.core.config import get_settings
 feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
 from backend.db.base import Base
+from backend.payments.dependencies import reset_payment_dependencies
 from backend.db.session import dispose_engine, get_engine
 
 from backend.db.session import dispose_engine, get_engine
@@ -91,11 +93,16 @@ def configure_settings(monkeypatch: pytest.MonkeyPatch, tmp_path) -> Iterator[No
     monkeypatch.setenv("REDIS__URL", "fakeredis://")
     monkeypatch.setenv("JWT__SECRET", "test-secret-key")
     monkeypatch.setenv("RATE_LIMIT__REQUESTS_PER_MINUTE", "5")
+    monkeypatch.setenv("YOOKASSA__SHOP_ID", "test-shop")
+    monkeypatch.setenv("YOOKASSA__SECRET_KEY", "test-secret-key")
+    monkeypatch.setenv("YOOKASSA__WEBHOOK_SECRET", "test-webhook-secret")
 
+    reset_payment_dependencies()
     get_settings.cache_clear()
     try:
         yield
     finally:
+        reset_payment_dependencies()
         get_settings.cache_clear()
 
 

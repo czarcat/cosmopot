@@ -68,6 +68,7 @@ feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
 
 main
   "PyJWT>=2.8",
+  "yookassa>=3.0",
 ]
 
 [project.optional-dependencies]

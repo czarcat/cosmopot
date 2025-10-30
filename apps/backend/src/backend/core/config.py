@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from decimal import Decimal
 from enum import StrEnum
 from functools import lru_cache
 from typing import Literal
@@ -123,6 +124,101 @@ class RateLimitSettings(BaseModel):
     )
 
 
+class PaymentPlan(BaseModel):
+    """Definition for a purchasable subscription plan."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    code: str = Field(..., min_length=2, max_length=64)
+    subscription_level: str = Field(..., min_length=2, max_length=64)
+    amount: Decimal = Field(..., ge=Decimal("0.00"))
+    currency: str = Field(default="RUB", min_length=3, max_length=3)
+    description: str | None = None
+
+    @model_validator(mode="after")
+    def _normalise(self) -> "PaymentPlan":
+        self.code = self.code.strip().lower()
+        self.subscription_level = self.subscription_level.strip().lower()
+        self.currency = self.currency.upper()
+        return self
+
+
+def _default_payment_plans() -> dict[str, "PaymentPlan"]:
+    return {
+        "basic": PaymentPlan(
+            code="basic",
+            subscription_level="basic",
+            amount=Decimal("9.99"),
+            currency="RUB",
+            description="Basic monthly subscription",
+        ),
+        "pro": PaymentPlan(
+            code="pro",
+            subscription_level="pro",
+            amount=Decimal("29.99"),
+            currency="RUB",
+            description="Pro monthly subscription",
+        ),
+        "enterprise": PaymentPlan(
+            code="enterprise",
+            subscription_level="enterprise",
+            amount=Decimal("99.99"),
+            currency="RUB",
+            description="Enterprise monthly subscription",
+        ),
+    }
+
+
+class PaymentsSettings(BaseModel):
+    """High-level configuration for payment flows and tiers."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    default_currency: str = Field(default="RUB", min_length=3, max_length=3)
+    plans: dict[str, PaymentPlan] = Field(default_factory=_default_payment_plans)
+
+    @model_validator(mode="after")
+    def _normalise(self) -> "PaymentsSettings":
+        self.default_currency = self.default_currency.upper()
+        normalised: dict[str, PaymentPlan] = {}
+        for key, plan in self.plans.items():
+            normalised_key = key.strip().lower()
+            if plan.code != normalised_key:
+                plan = plan.model_copy(update={"code": normalised_key})
+            normalised[normalised_key] = plan
+        self.plans = normalised
+        return self
+
+    def get_plan(self, code: str) -> PaymentPlan:
+        normalised = code.strip().lower()
+        if not normalised or normalised not in self.plans:
+            raise KeyError(code)
+        return self.plans[normalised]
+
+
+class YooKassaSettings(BaseModel):
+    """Credentials for the YooKassa payment provider."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    shop_id: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("YOOKASSA__SHOP_ID", "yookassa__shop_id", "YOOKASSA_SHOP_ID"),
+    )
+    secret_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("YOOKASSA__SECRET_KEY", "yookassa__secret_key", "YOOKASSA_SECRET_KEY"),
+    )
+    webhook_secret: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "YOOKASSA__WEBHOOK_SECRET",
+            "yookassa__webhook_secret",
+            "YOOKASSA_WEBHOOK_SECRET",
+        ),
+    )
+
+
 class Settings(BaseSettings):
     """Application settings loaded from the environment or secret stores."""
 
@@ -153,6 +249,8 @@ feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
     redis: RedisSettings = Field(default_factory=RedisSettings)
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     rate_limit: RateLimitSettings = Field(default_factory=RateLimitSettings)
+    payments: PaymentsSettings = Field(default_factory=PaymentsSettings)
+    yookassa: YooKassaSettings = Field(default_factory=YooKassaSettings)
 
     telegram_bot_token: SecretStr | None = Field(
         default=None,
