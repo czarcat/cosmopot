@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from functools import lru_cache
+from typing import Literal
 from urllib.parse import quote_plus
 
 from pydantic import (
@@ -68,6 +69,60 @@ class DatabaseSettings(BaseModel):
         return self.dsn
 
 
+class RedisSettings(BaseModel):
+    """Redis connection configuration."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    url: str = Field(
+        default="redis://localhost:6379/0",
+        validation_alias=AliasChoices("REDIS__URL", "redis__url", "REDIS_URL", "redis_url"),
+    )
+
+
+class JWTSettings(BaseModel):
+    """JWT issuance and cookie configuration."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    secret: SecretStr = Field(
+        default=SecretStr("change-me"),
+        validation_alias=AliasChoices("JWT__SECRET", "jwt__secret", "JWT_SECRET", "jwt_secret"),
+    )
+    algorithm: str = Field(default="HS256")
+    access_token_exp_minutes: int = Field(default=15, ge=1)
+    refresh_token_exp_days: int = Field(default=30, ge=1)
+    cookie_secure: bool = True
+    cookie_domain: str | None = None
+    cookie_path: str = "/"
+    cookie_samesite: Literal["lax", "strict", "none"] = "lax"
+    access_cookie_name: str = "access_token"
+    refresh_cookie_name: str = "refresh_token"
+
+
+class RateLimitSettings(BaseModel):
+    """Simple per-identifier rate limiter configuration."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    requests_per_minute: int = Field(
+        default=5,
+        ge=1,
+        validation_alias=AliasChoices(
+            "RATE_LIMIT__REQUESTS_PER_MINUTE",
+            "rate_limit__requests_per_minute",
+        ),
+    )
+    window_seconds: int = Field(
+        default=60,
+        ge=1,
+        validation_alias=AliasChoices(
+            "RATE_LIMIT__WINDOW_SECONDS",
+            "rate_limit__window_seconds",
+        ),
+    )
+
+
 class Settings(BaseSettings):
     """Application settings loaded from the environment or secret stores."""
 
@@ -94,6 +149,11 @@ class Settings(BaseSettings):
     cors_allow_origins: list[str] = Field(default_factory=list)
 
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
+feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
+    redis: RedisSettings = Field(default_factory=RedisSettings)
+    jwt: JWTSettings = Field(default_factory=JWTSettings)
+    rate_limit: RateLimitSettings = Field(default_factory=RateLimitSettings)
+
     telegram_bot_token: SecretStr | None = Field(
         default=None,
         validation_alias=AliasChoices(
@@ -142,6 +202,7 @@ class Settings(BaseSettings):
             "security__jwt_access_ttl_seconds",
         ),
     )
+main
 
     @model_validator(mode="after")
     def _normalize(self) -> "Settings":

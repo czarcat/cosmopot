@@ -206,5 +206,31 @@ pytest
 ```
 
 Additional tooling is configured via `pre-commit`, `ruff`, `black`, and `mypy` for quality gates.
+
+### Authentication API
+
+The backend exposes a full authentication workflow under `/api/v1/auth` with registration, verification, login, refresh, and logout endpoints. Tokens are returned in the JSON payload and persisted as HTTP-only cookies for browser clients. Authenticated requests can supply the access token via the `Authorization: Bearer <token>` header.
+
+| Endpoint | Description |
+| --- | --- |
+| `POST /api/v1/auth/register` | Create a new account and receive a verification token |
+| `POST /api/v1/auth/verify` | Activate an account using the verification token |
+| `POST /api/v1/auth/login` | Exchange credentials for access/refresh tokens (rate limited 5/min) |
+| `POST /api/v1/auth/refresh` | Rotate refresh tokens and receive a fresh access token |
+| `POST /api/v1/auth/logout` | Revoke the current session and clear cookies |
+| `GET /api/v1/auth/me` | Retrieve the authenticated user's profile |
+
+Example HTTPie commands:
+
+```bash
+http POST :8000/api/v1/auth/register email=demo@example.com password='StrongPass123!'
+# copy the verification token from the response
+http POST :8000/api/v1/auth/verify token=="<verification-token>"
+http --session=auth POST :8000/api/v1/auth/login email=demo@example.com password='StrongPass123!'
+http --session=auth POST :8000/api/v1/auth/refresh
+http --session=auth GET :8000/api/v1/auth/me
+http --session=auth POST :8000/api/v1/auth/logout
+```
+
 main
 main

@@ -6,12 +6,14 @@ from fastapi.responses import ORJSONResponse
 
 from backend.api.middleware import CorrelationIdMiddleware, RequestLoggingMiddleware
 from backend.api.routes import load_routers
+from backend.auth.middleware import CurrentUserMiddleware
+from backend.auth.tokens import TokenService
 from backend.core.config import Settings, get_settings
 from backend.core.lifespan import create_lifespan
 from backend.core.logging import configure_logging
 
 
-def _register_middlewares(app: FastAPI, settings: Settings) -> None:
+def _register_middlewares(app: FastAPI, settings: Settings, token_service: TokenService) -> None:
     if settings.cors_allow_origins:
         app.add_middleware(
             CORSMiddleware,
@@ -23,6 +25,11 @@ def _register_middlewares(app: FastAPI, settings: Settings) -> None:
 
     app.add_middleware(CorrelationIdMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
+    app.add_middleware(
+        CurrentUserMiddleware,
+        token_service=token_service,
+        access_cookie_name=settings.jwt.access_cookie_name,
+    )
 
 
 def _register_routers(app: FastAPI) -> None:
@@ -33,6 +40,8 @@ def _register_routers(app: FastAPI) -> None:
 def create_app() -> FastAPI:
     settings: Settings = get_settings()
     configure_logging(settings)
+
+    token_service = TokenService(settings)
 
     app = FastAPI(
         title=settings.project_name,
@@ -46,19 +55,25 @@ def create_app() -> FastAPI:
     )
 
     app.state.settings = settings
+    app.state.token_service = token_service
     app.openapi_tags = [
         {"name": "health", "description": "Service health check operations"},
+feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
+feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
+        {"name": "auth", "description": "Authentication and session management"},
+
 p0-feat-user-api-profile-rbac-sessions-balance-tests-openapi
         {
             "name": "users",
             "description": "User profile management, balance adjustments, session lifecycle, and GDPR stubs.",
         },
+main
 
         {"name": "auth", "description": "Authentication operations"},
 main
     ]
 
-    _register_middlewares(app, settings)
+    _register_middlewares(app, settings, token_service)
     _register_routers(app)
 
     return app
