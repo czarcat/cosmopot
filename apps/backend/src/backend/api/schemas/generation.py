@@ -12,6 +12,8 @@ __all__ = [
     "GenerationParameters",
     "GenerationTaskEnvelope",
     "GenerationTaskStatusResponse",
+    "PaginationMeta",
+    "GenerationTaskListResponse",
 ]
 
 
@@ -50,3 +52,22 @@ class GenerationTaskStatusResponse(GenerationTaskEnvelope):
 
     updated_at: datetime
     error_message: str | None = Field(default=None, serialization_alias="error")
+
+
+class PaginationMeta(BaseModel):
+    """Common pagination metadata returned by list endpoints."""
+
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1)
+    total: int = Field(ge=0)
+    has_next: bool
+    has_previous: bool
+
+
+class GenerationTaskListResponse(BaseModel):
+    """Paginated response containing generation tasks."""
+
+    items: list[GenerationTaskStatusResponse]
+    pagination: PaginationMeta
+
+    model_config = ConfigDict(from_attributes=True)

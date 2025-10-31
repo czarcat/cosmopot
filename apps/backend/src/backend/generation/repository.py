@@ -57,6 +57,30 @@ async def create_task(
     return task
 
 
+async def list_tasks_for_user(
+    session: AsyncSession,
+    user_id: int,
+    *,
+    offset: int,
+    limit: int,
+) -> list[GenerationTask]:
+    stmt = (
+        select(GenerationTask)
+        .where(GenerationTask.user_id == user_id)
+        .order_by(GenerationTask.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def count_tasks_for_user(session: AsyncSession, user_id: int) -> int:
+    stmt = select(func.count()).select_from(GenerationTask).where(GenerationTask.user_id == user_id)
+    result = await session.execute(stmt)
+    return int(result.scalar() or 0)
+
+
 async def add_event(
     session: AsyncSession,
     *,

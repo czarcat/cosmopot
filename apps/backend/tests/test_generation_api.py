@@ -4,7 +4,7 @@ import base64
 import json
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import boto3
 import pytest
@@ -17,6 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from unittest.mock import AsyncMock
 
+from backend.generation.enums import GenerationTaskStatus
 from backend.generation.models import GenerationTask
 from backend.generation.service import resolve_priority
 from user_service.enums import SubscriptionStatus, SubscriptionTier, UserRole
@@ -181,6 +182,16 @@ async def test_generation_flow_success(
     assert status_body["parameters"]["height"] == 256
     assert status_body["metadata"]["filename"] == "seed.png"
 
+    history_response = await async_client.get(
+        "/api/v1/generation/tasks",
+        params={"page": 1, "page_size": 5},
+        headers={"X-User-Id": str(user.id)},
+    )
+    assert history_response.status_code == 200
+    history_body = history_response.json()
+    assert history_body["pagination"]["total"] >= 1
+    assert history_body["items"][0]["prompt"] == payload["prompt"]
+
 
 @pytest.mark.asyncio()
 async def test_generation_quota_exhausted(
@@ -248,3 +259,60 @@ async def test_generation_validation_errors(
     )
     assert response.status_code == 413
     assert not rabbit_stub["published"]
+
+
+@pytest.mark.asyncio()
+async def test_generation_tasks_pagination(
+    async_client: AsyncClient,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    user = await _create_user_with_subscription(session_factory)
+    async with session_factory() as session:
+        now = datetime.now(timezone.utc)
+        for index in range(12):
+            task = GenerationTask(
+                id=uuid4(),
+                user_id=user.id,
+                prompt=f"Task {index}",
+                parameters={"width": 512, "height": 512, "model": "stable-diffusion-xl"},
+                status=GenerationTaskStatus.COMPLETED,
+                priority=1,
+                subscription_tier="standard",
+                s3_bucket="bucket",
+                s3_key=f"seed-{index}",
+                input_url=f"https://example.com/seed-{index}.png",
+                metadata={},
+            )
+            task.created_at = now + timedelta(seconds=index)
+            task.updated_at = task.created_at
+            session.add(task)
+        await session.commit()
+
+    first_page = await async_client.get(
+        "/api/v1/generation/tasks",
+        params={"page": 1, "page_size": 5},
+        headers={"X-User-Id": str(user.id)},
+    )
+    assert first_page.status_code == 200
+    payload = first_page.json()
+    assert payload["pagination"] == {
+        "page": 1,
+        "page_size": 5,
+        "total": 12,
+        "has_next": True,
+        "has_previous": False,
+    }
+    assert len(payload["items"]) == 5
+
+    last_page = await async_client.get(
+        "/api/v1/generation/tasks",
+        params={"page": 3, "page_size": 5},
+        headers={"X-User-Id": str(user.id)},
+    )
+    assert last_page.status_code == 200
+    last_payload = last_page.json()
+    assert last_payload["pagination"]["page"] == 3
+    assert last_payload["pagination"]["has_previous"] is True
+    assert last_payload["pagination"]["has_next"] is False
+    assert last_payload["pagination"]["total"] == 12
+    assert len(last_payload["items"]) == 2
