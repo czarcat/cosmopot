@@ -3,13 +3,20 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .enums import GenerationEventType, GenerationTaskStatus
 from .models import GenerationTask, GenerationTaskEvent
 
-__all__ = ["create_task", "add_event", "get_task_by_id", "update_task_status"]
+__all__ = [
+    "create_task",
+    "add_event",
+    "get_task_by_id",
+    "update_task_status",
+    "list_tasks_for_user",
+    "count_tasks_for_user",
+]
 
 
 def _ensure_dict(payload: dict[str, Any] | None) -> dict[str, Any]:
