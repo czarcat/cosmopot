@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
 import datetime as dt
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.auth.dependencies import (
@@ -40,15 +40,6 @@ from backend.auth.service import AuthResult, AuthService
 from backend.auth.tokens import TokenService
 from backend.core.config import Settings, get_settings
 from backend.db.dependencies import get_db_session
-
-from datetime import datetime
-
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from backend.core.config import Settings
-from backend.db.dependencies import get_db_session
 from backend.services import (
     TelegramAuthError,
     TelegramAuthInactiveUserError,
@@ -57,12 +48,10 @@ from backend.services import (
     TelegramAuthSignatureError,
     TelegramLoginPayload,
 )
-main
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 
-feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
 def _now() -> dt.datetime:
     return dt.datetime.now(tz=dt.timezone.utc)
 
@@ -308,12 +297,13 @@ async def get_me(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return _user_to_read(user)
 
+
 class TelegramAuthResponse(BaseModel):
     access_token: str
     token_type: str
-    expires_at: datetime
+    expires_at: dt.datetime
 
-    model_config = ConfigDict(json_encoders={datetime: lambda value: value.isoformat()})
+    model_config = ConfigDict(json_encoders={dt.datetime: lambda value: value.isoformat()})
 
 
 @router.post("/telegram", response_model=TelegramAuthResponse)
@@ -379,4 +369,3 @@ def _extract_client_ip(request: Request) -> str | None:
         return request.client.host
 
     return None
-main
