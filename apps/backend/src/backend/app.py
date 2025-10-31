@@ -58,6 +58,7 @@ def create_app() -> FastAPI:
 
     app.state.settings = settings
     app.state.token_service = token_service
+    app.state.bot_runtime = None
     app.openapi_tags = [
         {"name": "health", "description": "Service health check operations"},
 feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests

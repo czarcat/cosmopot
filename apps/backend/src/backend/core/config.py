@@ -387,6 +387,30 @@ feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
             "TELEGRAM_BOT_TOKEN",
         ),
     )
+    backend_base_url: AnyUrl = Field(
+        default="http://localhost:8000",
+        validation_alias=AliasChoices(
+            "BACKEND__BASE_URL",
+            "backend__base_url",
+            "BACKEND_BASE_URL",
+        ),
+    )
+    telegram_webhook_path: str = Field(
+        default="/api/v1/bot/webhook",
+        validation_alias=AliasChoices(
+            "TELEGRAM__WEBHOOK_PATH",
+            "telegram__webhook_path",
+            "TELEGRAM_WEBHOOK_PATH",
+        ),
+    )
+    telegram_webhook_secret_token: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "TELEGRAM__WEBHOOK_SECRET",
+            "telegram__webhook_secret",
+            "TELEGRAM_WEBHOOK_SECRET",
+        ),
+    )
     telegram_login_ttl_seconds: int = Field(
         default=86_400,
         ge=60,
