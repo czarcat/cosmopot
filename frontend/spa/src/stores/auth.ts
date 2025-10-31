@@ -1,9 +1,9 @@
 import { defineStore } from "pinia";
 
-import type { components } from "@/types/generated/schema";
-import httpClient from "@/services/httpClient";
 import * as authService from "@/services/authService";
+import httpClient from "@/services/httpClient";
 import { useNotificationsStore } from "@/stores/notifications";
+import type { components } from "@/types/generated/schema";
 
 export type TokenResponse = components["schemas"]["TokenResponse"];
 export type UserRead = components["schemas"]["UserRead"];

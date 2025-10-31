@@ -42,7 +42,6 @@ dev = [
     "mypy>=1.5",
     "pytest-cov>=4.1",
     "ruff>=0.1.5",
-    "types-structlog>=0.6.0.7",
 ]
 
 [tool.setuptools.packages.find]
