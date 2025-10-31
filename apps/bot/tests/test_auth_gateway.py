@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -24,7 +24,7 @@ async def test_auth_gateway_signs_payload_correctly() -> None:
             json={
                 "access_token": "token-1234567890",
                 "token_type": "bearer",
-                "expires_at": datetime.now(timezone.utc).isoformat(),
+                "expires_at": datetime.now(UTC).isoformat(),
             },
         )
 

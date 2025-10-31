@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 
 import httpx
@@ -20,7 +20,7 @@ async def test_webhook_route_dispatches_update(bot_settings, fake_redis) -> None
             json={
                 "access_token": "token-xyz",
                 "token_type": "bearer",
-                "expires_at": datetime.now(timezone.utc).isoformat(),
+                "expires_at": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -44,7 +44,7 @@ async def test_webhook_route_dispatches_update(bot_settings, fake_redis) -> None
                     "update_id": 77,
                     "message": {
                         "message_id": 10,
-                        "date": int(datetime.now(timezone.utc).timestamp()),
+                        "date": int(datetime.now(UTC).timestamp()),
                         "chat": {"id": 200, "type": "private"},
                         "from": {"id": 88, "is_bot": False, "first_name": "Grace"},
                         "text": "/start",

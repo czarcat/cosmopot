@@ -358,7 +358,7 @@ async def terminate_session(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
         )
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if user_session.revoked_at is None:
         user_session.revoked_at = now
     user_session.ended_at = now

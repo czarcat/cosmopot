@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 from uuid import uuid4
@@ -83,7 +83,7 @@ async def create_session(
     ended: bool = False,
 ) -> UserSession:
     async with session_factory() as session:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         user_session = UserSession(
             user_id=user.id,
             session_token=uuid4().hex,
