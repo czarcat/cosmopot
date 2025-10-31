@@ -5,7 +5,7 @@ from typing import Any
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from pydantic import ValidationError
 
 try:  # pragma: no cover - fallback when prometheus_client is unavailable
@@ -28,13 +28,20 @@ from backend.api.dependencies.users import get_current_user
 from backend.api.schemas.generation import (
     GenerationParameters,
     GenerationTaskEnvelope,
+    GenerationTaskListResponse,
     GenerationTaskStatusResponse,
 )
 from backend.core.config import Settings, get_settings
 from backend.db.dependencies import get_db_session
 from backend.generation.enums import GenerationEventType, GenerationTaskStatus
 from backend.generation.models import GenerationTask
-from backend.generation.repository import add_event, create_task, get_task_by_id
+from backend.generation.repository import (
+    add_event,
+    count_tasks_for_user,
+    create_task,
+    get_task_by_id,
+    list_tasks_for_user,
+)
 from backend.generation.service import GenerationService, resolve_priority
 from user_service.enums import SubscriptionStatus
 from user_service.models import Subscription, User
@@ -266,6 +273,32 @@ async def submit_generation_task(
         tier=tier_label,
     )
     return GenerationTaskEnvelope.model_validate(task)
+
+
+@router.get(
+    "/generation/tasks",
+    response_model=GenerationTaskListResponse,
+    summary="List generation tasks for the authenticated user",
+)
+async def list_generation_tasks(
+    page: int = Query(1, ge=1, description="Page number for pagination"),
+    page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
+    session: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_user),
+) -> GenerationTaskListResponse:
+    total = await count_tasks_for_user(session, current_user.id)
+    offset = (page - 1) * page_size
+    tasks = await list_tasks_for_user(session, current_user.id, offset=offset, limit=page_size)
+    has_next = offset + len(tasks) < total
+    items = [GenerationTaskStatusResponse.model_validate(task) for task in tasks]
+    pagination = {
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "has_next": has_next,
+        "has_previous": page > 1,
+    }
+    return GenerationTaskListResponse(items=items, pagination=pagination)
 
 
 @router.get(

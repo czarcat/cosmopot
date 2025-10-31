@@ -33,15 +33,27 @@ async def task_updates(websocket: WebSocket, task_id: UUID) -> None:
         await websocket.close(code=status.WS_1011_INTERNAL_ERROR, reason="Task updates unavailable")
         return
 
-    user_id_header = websocket.headers.get("x-user-id")
-    if user_id_header is None:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Missing authentication header")
-        return
+    user_id: int | None = None
 
-    try:
-        user_id = int(user_id_header)
-    except ValueError:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid authentication header")
+    user_id_header = websocket.headers.get("x-user-id")
+    if user_id_header is not None:
+        try:
+            user_id = int(user_id_header)
+        except ValueError:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid authentication header")
+            return
+    else:
+        session_data = getattr(websocket, "session", None)
+        if isinstance(session_data, dict):
+            auth = session_data.get("auth")
+            if isinstance(auth, dict):
+                candidate = auth.get("user_id")
+                if isinstance(candidate, int):
+                    user_id = candidate
+                elif isinstance(candidate, str) and candidate.isdigit():
+                    user_id = int(candidate)
+    if user_id is None:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Missing authentication context")
         return
 
     session_factory = get_session_factory()

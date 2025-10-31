@@ -3,13 +3,20 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .enums import GenerationEventType, GenerationTaskStatus
 from .models import GenerationTask, GenerationTaskEvent
 
-__all__ = ["create_task", "add_event", "get_task_by_id", "update_task_status"]
+__all__ = [
+    "create_task",
+    "add_event",
+    "get_task_by_id",
+    "update_task_status",
+    "list_tasks_for_user",
+    "count_tasks_for_user",
+]
 
 
 def _ensure_dict(payload: dict[str, Any] | None) -> dict[str, Any]:
@@ -48,6 +55,30 @@ async def create_task(
     await session.flush()
     await session.refresh(task)
     return task
+
+
+async def list_tasks_for_user(
+    session: AsyncSession,
+    user_id: int,
+    *,
+    offset: int,
+    limit: int,
+) -> list[GenerationTask]:
+    stmt = (
+        select(GenerationTask)
+        .where(GenerationTask.user_id == user_id)
+        .order_by(GenerationTask.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def count_tasks_for_user(session: AsyncSession, user_id: int) -> int:
+    stmt = select(func.count()).select_from(GenerationTask).where(GenerationTask.user_id == user_id)
+    result = await session.execute(stmt)
+    return int(result.scalar() or 0)
 
 
 async def add_event(
