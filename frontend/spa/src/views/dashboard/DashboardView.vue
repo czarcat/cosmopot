@@ -70,15 +70,15 @@
         </header>
         <ul class="dashboard-list">
           <li>
-            <span class="dashboard-dot dashboard-dot--success"></span>
+            <span class="dashboard-dot dashboard-dot--success" />
             Worker latency within SLO
           </li>
           <li>
-            <span class="dashboard-dot dashboard-dot--warning"></span>
+            <span class="dashboard-dot dashboard-dot--warning" />
             RabbitMQ nearing memory watermark
           </li>
           <li>
-            <span class="dashboard-dot dashboard-dot--error"></span>
+            <span class="dashboard-dot dashboard-dot--error" />
             Investigate spike in failed sessions
           </li>
         </ul>

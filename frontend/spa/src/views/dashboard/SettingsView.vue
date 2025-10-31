@@ -11,15 +11,15 @@
       <h2>Theme</h2>
       <div class="settings-view__options" role="group" aria-label="Theme selection">
         <label class="settings-view__option">
-          <input v-model="theme" type="radio" name="theme" value="system" />
+          <input v-model="theme" type="radio" name="theme" value="system">
           <span>System</span>
         </label>
         <label class="settings-view__option">
-          <input v-model="theme" type="radio" name="theme" value="light" />
+          <input v-model="theme" type="radio" name="theme" value="light">
           <span>Light</span>
         </label>
         <label class="settings-view__option">
-          <input v-model="theme" type="radio" name="theme" value="dark" />
+          <input v-model="theme" type="radio" name="theme" value="dark">
           <span>Dark</span>
         </label>
       </div>
@@ -31,11 +31,11 @@
         Choose delivery channels when rate limits or errors occur.
       </p>
       <label class="settings-view__toggle">
-        <input type="checkbox" v-model="emailAlerts" />
+        <input type="checkbox" v-model="emailAlerts">
         <span>Email alerts</span>
       </label>
       <label class="settings-view__toggle">
-        <input type="checkbox" v-model="slackAlerts" />
+        <input type="checkbox" v-model="slackAlerts">
         <span>Slack alerts</span>
       </label>
     </div>
