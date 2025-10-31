@@ -48,7 +48,11 @@ class BackendGateway:
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
-        self._ws_base_url = self._normalise_ws_base(websocket_base_url) if websocket_base_url else self._infer_ws_base(self._base_url)
+        self._ws_base_url = (
+            self._normalise_ws_base(websocket_base_url)
+            if websocket_base_url
+            else self._infer_ws_base(self._base_url)
+        )
 
     @staticmethod
     def _infer_ws_base(base_url: str) -> str:
@@ -70,14 +74,18 @@ class BackendGateway:
         return f"{base}{path_value}"
 
     async def health(self) -> dict[str, Any]:
-        async with httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout) as client:
+        async with httpx.AsyncClient(
+            base_url=self._base_url, timeout=self._timeout
+        ) as client:
             response = await client.get("/health")
         response.raise_for_status()
         return response.json()
 
     async def login(self, email: str, password: str) -> AuthTokens:
         payload = {"email": email, "password": password}
-        async with httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout) as client:
+        async with httpx.AsyncClient(
+            base_url=self._base_url, timeout=self._timeout
+        ) as client:
             response = await client.post("/api/v1/auth/login", json=payload)
         if response.status_code == status.HTTP_200_OK:
             data = response.json()
@@ -86,7 +94,9 @@ class BackendGateway:
                 refresh_token=data.get("refresh_token"),
                 expires_in=data.get("expires_in"),
                 refresh_expires_in=data.get("refresh_expires_in"),
-                session_id=str(data.get("session_id")) if data.get("session_id") else None,
+                session_id=str(data.get("session_id"))
+                if data.get("session_id")
+                else None,
                 user=data.get("user"),
             )
         self._raise_error(response)
@@ -94,7 +104,9 @@ class BackendGateway:
 
     async def refresh(self, refresh_token: str) -> AuthTokens:
         payload = {"refresh_token": refresh_token}
-        async with httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout) as client:
+        async with httpx.AsyncClient(
+            base_url=self._base_url, timeout=self._timeout
+        ) as client:
             response = await client.post("/api/v1/auth/refresh", json=payload)
         if response.status_code == status.HTTP_200_OK:
             data = response.json()
@@ -103,19 +115,29 @@ class BackendGateway:
                 refresh_token=data.get("refresh_token"),
                 expires_in=data.get("expires_in"),
                 refresh_expires_in=data.get("refresh_expires_in"),
-                session_id=str(data.get("session_id")) if data.get("session_id") else None,
+                session_id=str(data.get("session_id"))
+                if data.get("session_id")
+                else None,
                 user=data.get("user"),
             )
         self._raise_error(response)
-        raise UnauthorizedError("Token refresh failed", status_code=response.status_code)
+        raise UnauthorizedError(
+            "Token refresh failed", status_code=response.status_code
+        )
 
     async def logout(self, refresh_token: str | None) -> None:
         payload: dict[str, Any] = {}
         if refresh_token:
             payload["refresh_token"] = refresh_token
-        async with httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout) as client:
+        async with httpx.AsyncClient(
+            base_url=self._base_url, timeout=self._timeout
+        ) as client:
             response = await client.post("/api/v1/auth/logout", json=payload)
-        if response.status_code not in {status.HTTP_200_OK, status.HTTP_401_UNAUTHORIZED, status.HTTP_204_NO_CONTENT}:
+        if response.status_code not in {
+            status.HTTP_200_OK,
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_204_NO_CONTENT,
+        }:
             self._raise_error(response)
 
     async def get_current_user(
@@ -239,9 +261,14 @@ class BackendGateway:
                 async for message in connection:
                     yield message
         except InvalidStatusCode as exc:
-            raise UnauthorizedError("WebSocket authentication failed", status_code=exc.status_code) from exc
+            raise UnauthorizedError(
+                "WebSocket authentication failed", status_code=exc.status_code
+            ) from exc
         except ConnectionClosedError as exc:
-            raise BackendError(f"Task stream closed unexpectedly (code {exc.code})", status_code=exc.code) from exc
+            raise BackendError(
+                f"Task stream closed unexpectedly (code {exc.code})",
+                status_code=exc.code,
+            ) from exc
         except Exception as exc:  # pragma: no cover - defensive
             raise BackendError(f"Task stream error: {exc}") from exc
 
@@ -257,9 +284,14 @@ class BackendGateway:
         headers = kwargs.pop("headers", {})
         headers.setdefault("Authorization", f"Bearer {access_token}")
 
-        async with httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout) as client:
+        async with httpx.AsyncClient(
+            base_url=self._base_url, timeout=self._timeout
+        ) as client:
             response = await client.request(method, path, headers=headers, **kwargs)
-            if response.status_code != status.HTTP_401_UNAUTHORIZED or not refresh_token:
+            if (
+                response.status_code != status.HTTP_401_UNAUTHORIZED
+                or not refresh_token
+            ):
                 return response, None
 
             tokens = await self.refresh(refresh_token)
@@ -273,12 +305,17 @@ class BackendGateway:
         try:
             payload = response.json()
             if isinstance(payload, dict):
-                message = str(payload.get("detail") or payload.get("message") or payload)
+                message = str(
+                    payload.get("detail") or payload.get("message") or payload
+                )
             else:
                 message = str(payload)
         except ValueError:
             message = response.text or "Unexpected backend response"
 
-        if response.status_code in {status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN}:
+        if response.status_code in {
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_403_FORBIDDEN,
+        }:
             raise UnauthorizedError(message, status_code=response.status_code)
         raise BackendError(message, status_code=response.status_code)

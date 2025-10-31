@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import (
+    JSON,
     BigInteger,
     Boolean,
     CheckConstraint,
@@ -13,7 +14,6 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    JSON,
     Numeric,
     String,
     Text,
@@ -69,9 +69,7 @@ class User(Base):
     """Stores core authentication and account information for a person."""
 
     __tablename__ = "users"
-    __table_args__ = (
-        UniqueConstraint("email", name="uq_users_email"),
-    )
+    __table_args__ = (UniqueConstraint("email", name="uq_users_email"),)
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -138,7 +136,9 @@ class Subscription(Base):
 
     __tablename__ = "subscriptions"
     __table_args__ = (
-        CheckConstraint("quota_limit >= 0", name="ck_subscriptions_quota_limit_positive"),
+        CheckConstraint(
+            "quota_limit >= 0", name="ck_subscriptions_quota_limit_positive"
+        ),
         CheckConstraint("quota_used >= 0", name="ck_subscriptions_quota_used_positive"),
         CheckConstraint(
             "quota_used <= quota_limit", name="ck_subscriptions_quota_within_limit"
@@ -182,7 +182,9 @@ class Subscription(Base):
     current_period_start: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
-    current_period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    current_period_end: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     canceled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -196,13 +198,19 @@ class Subscription(Base):
 
     user: Mapped[User] = relationship(back_populates="subscriptions")
     history: Mapped[List["SubscriptionHistory"]] = relationship(
-        back_populates="subscription", cascade="all, delete-orphan", passive_deletes=True
+        back_populates="subscription",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
     payments: Mapped[List["Payment"]] = relationship(
-        back_populates="subscription", cascade="all, delete-orphan", passive_deletes=True
+        back_populates="subscription",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
     transactions: Mapped[List["Transaction"]] = relationship(
-        back_populates="subscription", cascade="all, delete-orphan", passive_deletes=True
+        back_populates="subscription",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
 
@@ -301,7 +309,9 @@ class Payment(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    subscription: Mapped[Optional[Subscription]] = relationship(back_populates="payments")
+    subscription: Mapped[Optional[Subscription]] = relationship(
+        back_populates="payments"
+    )
     user: Mapped[User] = relationship(back_populates="payments")
     transactions: Mapped[List["Transaction"]] = relationship(
         back_populates="payment", cascade="all, delete-orphan", passive_deletes=True
@@ -394,7 +404,10 @@ class Prompt(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
     tasks: Mapped[List["GenerationTask"]] = relationship(

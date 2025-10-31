@@ -5,12 +5,23 @@ from typing import Any
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+    status,
+)
 from pydantic import ValidationError
 
 try:  # pragma: no cover - fallback when prometheus_client is unavailable
     from prometheus_client import Counter
 except ModuleNotFoundError:  # pragma: no cover
+
     class Counter:  # type: ignore[override]
         def __init__(self, *args, **kwargs) -> None:
             pass
@@ -20,6 +31,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
         def inc(self, amount: float = 1.0) -> None:  # type: ignore[override]
             return None
+
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -67,16 +79,22 @@ _GENERATION_ENQUEUED = Counter(
 )
 
 
-def get_generation_service(settings: Settings = Depends(get_settings)) -> GenerationService:
+def get_generation_service(
+    settings: Settings = Depends(get_settings),
+) -> GenerationService:
     return GenerationService(settings)
 
 
-async def _get_active_subscription(session: AsyncSession, user_id: int) -> Subscription | None:
+async def _get_active_subscription(
+    session: AsyncSession, user_id: int
+) -> Subscription | None:
     stmt = (
         select(Subscription)
         .where(
             Subscription.user_id == user_id,
-            Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+            Subscription.status.in_(
+                [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]
+            ),
         )
         .order_by(Subscription.current_period_end.desc())
         .limit(1)
@@ -92,20 +110,27 @@ def _parse_parameters(raw: str | None) -> GenerationParameters:
     try:
         return GenerationParameters.model_validate_json(raw)
     except ValidationError as exc:  # pragma: no cover - converted to HTTP error
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid parameters payload") from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid parameters payload"
+        ) from exc
 
 
 def _normalise_prompt(prompt: str) -> str:
     cleaned = prompt.strip()
     if not cleaned:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Prompt must not be empty")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Prompt must not be empty"
+        )
     return cleaned
 
 
 def _content_type_extension(upload: UploadFile) -> tuple[str, str]:
     content_type = (upload.content_type or "").lower()
     if content_type not in _ALLOWS:
-        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Unsupported image type")
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Unsupported image type",
+        )
     return content_type, _ALLOWS[content_type]
 
 
@@ -132,6 +157,7 @@ async def _broadcast_task_update(request: Request, task: GenerationTask) -> None
     summary="Submit an image generation job",
 )
 async def submit_generation_task(
+    request: Request,
     prompt: str = Form(..., description="Text prompt guiding the generation"),
     parameters_raw: str | None = Form(
         None,
@@ -139,7 +165,6 @@ async def submit_generation_task(
         alias="parameters",
     ),
     file: UploadFile = File(..., description="Input image seed"),
-    request: Request,
     session: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
@@ -155,10 +180,15 @@ async def submit_generation_task(
     content = await file.read()
     if not content:
         _GENERATION_REQUESTS.labels(outcome="invalid_image").inc()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image file is required")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Image file is required"
+        )
     if len(content) > _MAX_IMAGE_BYTES:
         _GENERATION_REQUESTS.labels(outcome="too_large").inc()
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Image exceeds size limit")
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Image exceeds size limit",
+        )
 
     try:
         content_type, extension = _content_type_extension(file)
@@ -169,11 +199,16 @@ async def submit_generation_task(
     subscription = await _get_active_subscription(session, current_user.id)
     if subscription is None:
         _GENERATION_REQUESTS.labels(outcome="no_subscription").inc()
-        raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="Active subscription required")
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="Active subscription required",
+        )
 
     if subscription.quota_limit and subscription.quota_used >= subscription.quota_limit:
         _GENERATION_REQUESTS.labels(outcome="quota_exhausted").inc()
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Generation quota exhausted")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Generation quota exhausted"
+        )
 
     subscription.quota_used += 1
 
@@ -259,7 +294,10 @@ async def submit_generation_task(
             error=str(exc),
         )
         _GENERATION_REQUESTS.labels(outcome="error").inc()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to enqueue generation task") from exc
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to enqueue generation task",
+        ) from exc
 
     await _broadcast_task_update(request, task)
 
@@ -288,7 +326,9 @@ async def list_generation_tasks(
 ) -> GenerationTaskListResponse:
     total = await count_tasks_for_user(session, current_user.id)
     offset = (page - 1) * page_size
-    tasks = await list_tasks_for_user(session, current_user.id, offset=offset, limit=page_size)
+    tasks = await list_tasks_for_user(
+        session, current_user.id, offset=offset, limit=page_size
+    )
     has_next = offset + len(tasks) < total
     items = [GenerationTaskStatusResponse.model_validate(task) for task in tasks]
     pagination = {
@@ -313,5 +353,7 @@ async def get_generation_status(
 ) -> GenerationTaskStatusResponse:
     task = await get_task_by_id(session, task_id)
     if task is None or task.user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
+        )
     return GenerationTaskStatusResponse.model_validate(task)

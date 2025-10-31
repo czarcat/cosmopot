@@ -98,7 +98,9 @@ def test_websocket_streams_updates_in_order(
     session_factory: async_sessionmaker[AsyncSession],
     event_loop: asyncio.AbstractEventLoop,
 ) -> None:
-    user, task = event_loop.run_until_complete(_create_user_and_task(app, session_factory))
+    user, task = event_loop.run_until_complete(
+        _create_user_and_task(app, session_factory)
+    )
 
     with test_client.websocket_connect(
         f"/ws/tasks/{task.id}",
@@ -111,7 +113,9 @@ def test_websocket_streams_updates_in_order(
         assert initial["terminal"] is False
 
         event_loop.run_until_complete(
-            _set_task_status(app, session_factory, task.id, status=GenerationTaskStatus.PROCESSING)
+            _set_task_status(
+                app, session_factory, task.id, status=GenerationTaskStatus.PROCESSING
+            )
         )
         processing = ws.receive_json()
         assert processing["type"] == "update"
@@ -120,7 +124,9 @@ def test_websocket_streams_updates_in_order(
         assert processing["terminal"] is False
 
         event_loop.run_until_complete(
-            _set_task_status(app, session_factory, task.id, status=GenerationTaskStatus.COMPLETED)
+            _set_task_status(
+                app, session_factory, task.id, status=GenerationTaskStatus.COMPLETED
+            )
         )
         completed = ws.receive_json()
         assert completed["terminal"] is True
@@ -137,7 +143,9 @@ def test_websocket_snapshot_reflects_latest_state(
     session_factory: async_sessionmaker[AsyncSession],
     event_loop: asyncio.AbstractEventLoop,
 ) -> None:
-    user, task = event_loop.run_until_complete(_create_user_and_task(app, session_factory))
+    user, task = event_loop.run_until_complete(
+        _create_user_and_task(app, session_factory)
+    )
     event_loop.run_until_complete(
         _set_task_status(
             app,

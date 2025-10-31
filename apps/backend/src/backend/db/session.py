@@ -28,7 +28,9 @@ def get_engine(settings: Optional[Settings] = None) -> AsyncEngine:
     return _ENGINE
 
 
-def get_session_factory(settings: Optional[Settings] = None) -> async_sessionmaker[AsyncSession]:
+def get_session_factory(
+    settings: Optional[Settings] = None,
+) -> async_sessionmaker[AsyncSession]:
     global _SESSION_FACTORY
     if _SESSION_FACTORY is None:
         _SESSION_FACTORY = async_sessionmaker(

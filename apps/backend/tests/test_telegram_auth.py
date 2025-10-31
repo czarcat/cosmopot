@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
 import hashlib
 import hmac
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import pytest
@@ -27,7 +27,9 @@ BASE_PAYLOAD = {
 
 
 @pytest.mark.asyncio
-async def test_telegram_auth_creates_user_and_session(async_client: AsyncClient) -> None:
+async def test_telegram_auth_creates_user_and_session(
+    async_client: AsyncClient,
+) -> None:
     payload = build_payload()
 
     response = await async_client.post("/api/v1/auth/telegram", json=payload)
@@ -54,10 +56,14 @@ async def test_telegram_auth_is_idempotent(async_client: AsyncClient) -> None:
     first_payload = build_payload()
     second_payload = build_payload()
 
-    first_response = await async_client.post("/api/v1/auth/telegram", json=first_payload)
+    first_response = await async_client.post(
+        "/api/v1/auth/telegram", json=first_payload
+    )
     assert first_response.status_code == 200
 
-    second_response = await async_client.post("/api/v1/auth/telegram", json=second_payload)
+    second_response = await async_client.post(
+        "/api/v1/auth/telegram", json=second_payload
+    )
     assert second_response.status_code == 200
 
     session_factory = get_session_factory()
@@ -65,7 +71,9 @@ async def test_telegram_auth_is_idempotent(async_client: AsyncClient) -> None:
         user_count = await session.scalar(select(func.count()).select_from(User))
         assert user_count == 1
 
-        sessions = await _fetch_sessions_for_user(session, first_payload["id"], by_telegram=True)
+        sessions = await _fetch_sessions_for_user(
+            session, first_payload["id"], by_telegram=True
+        )
         assert len(sessions) == 2
 
 
@@ -121,7 +129,9 @@ async def test_telegram_auth_inactive_user_forbidden(async_client: AsyncClient) 
     assert "disabled" in response.json()["detail"].lower()
 
 
-def build_payload(auth_date: datetime | None = None, **overrides: Any) -> dict[str, Any]:
+def build_payload(
+    auth_date: datetime | None = None, **overrides: Any
+) -> dict[str, Any]:
     moment = auth_date or datetime.now(timezone.utc)
     if moment.tzinfo is None:
         moment = moment.replace(tzinfo=timezone.utc)
@@ -142,7 +152,9 @@ def compute_hash(payload: dict[str, Any]) -> str:
         if key != "hash"
     )
     secret_key = hashlib.sha256(TEST_BOT_TOKEN.encode("utf-8")).digest()
-    return hmac.new(secret_key, data_check_string.encode("utf-8"), hashlib.sha256).hexdigest()
+    return hmac.new(
+        secret_key, data_check_string.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
 
 
 def _stringify(value: Any) -> str:
@@ -151,7 +163,9 @@ def _stringify(value: Any) -> str:
     return str(value)
 
 
-async def _fetch_user_by_telegram_id(session: AsyncSession, telegram_id: int) -> User | None:
+async def _fetch_user_by_telegram_id(
+    session: AsyncSession, telegram_id: int
+) -> User | None:
     stmt = (
         select(User)
         .join(UserProfile, UserProfile.user_id == User.id)

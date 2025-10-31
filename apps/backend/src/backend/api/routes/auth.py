@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
-import datetime as dt
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.auth.dependencies import (
@@ -40,15 +40,6 @@ from backend.auth.service import AuthResult, AuthService
 from backend.auth.tokens import TokenService
 from backend.core.config import Settings, get_settings
 from backend.db.dependencies import get_db_session
-
-from datetime import datetime
-
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from backend.core.config import Settings
-from backend.db.dependencies import get_db_session
 from backend.services import (
     TelegramAuthError,
     TelegramAuthInactiveUserError,
@@ -57,14 +48,12 @@ from backend.services import (
     TelegramAuthSignatureError,
     TelegramLoginPayload,
 )
-main
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 
-feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
-def _now() -> dt.datetime:
-    return dt.datetime.now(tz=dt.timezone.utc)
+def _now() -> datetime:
+    return datetime.now(UTC)
 
 
 def _user_to_read(user: User) -> UserRead:
@@ -116,7 +105,9 @@ def _clear_auth_cookies(response: Response, settings: Settings) -> None:
         cookie_kwargs["domain"] = settings.jwt.cookie_domain
 
     response.set_cookie(settings.jwt.access_cookie_name, "", max_age=0, **cookie_kwargs)
-    response.set_cookie(settings.jwt.refresh_cookie_name, "", max_age=0, **cookie_kwargs)
+    response.set_cookie(
+        settings.jwt.refresh_cookie_name, "", max_age=0, **cookie_kwargs
+    )
 
 
 def _auth_result_to_response(result: AuthResult) -> TokenResponse:
@@ -140,25 +131,47 @@ def _auth_result_to_response(result: AuthResult) -> TokenResponse:
 
 def _map_auth_error(exc: Exception) -> HTTPException:
     if isinstance(exc, EmailAlreadyRegisteredError):
-        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
+        return HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
+        )
     if isinstance(exc, InvalidCredentialsError):
-        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        return HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
+        )
     if isinstance(exc, AccountNotVerifiedError):
-        return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account verification required")
+        return HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account verification required",
+        )
     if isinstance(exc, AccountDisabledError):
-        return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled")
+        return HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled"
+        )
     if isinstance(exc, VerificationTokenInvalidError):
-        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification token")
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification token"
+        )
     if isinstance(exc, TokenExpiredError):
-        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+        return HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
+        )
     if isinstance(exc, SessionRevokedError):
-        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session is no longer valid")
+        return HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session is no longer valid",
+        )
     if isinstance(exc, InvalidTokenError):
-        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Authentication error")
+        return HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Authentication error"
+    )
 
 
-@router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED
+)
 async def register_user(
     payload: RegisterRequest,
     auth_service: AuthService = Depends(get_auth_service),
@@ -234,9 +247,13 @@ async def refresh_token(
     settings: Settings = Depends(get_settings),
     rate_limiter: RateLimiter = Depends(get_rate_limiter),
 ) -> TokenResponse:
-    raw_token = payload.refresh_token or request.cookies.get(settings.jwt.refresh_cookie_name)
+    raw_token = payload.refresh_token or request.cookies.get(
+        settings.jwt.refresh_cookie_name
+    )
     if raw_token is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Refresh token missing")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Refresh token missing"
+        )
 
     try:
         decoded = token_service.decode_refresh_token(raw_token)
@@ -273,9 +290,14 @@ async def logout(
     settings: Settings = Depends(get_settings),
     rate_limiter: RateLimiter = Depends(get_rate_limiter),
 ) -> MessageResponse:
-    raw_token = payload.refresh_token or request.cookies.get(settings.jwt.refresh_cookie_name)
+    raw_token = payload.refresh_token or request.cookies.get(
+        settings.jwt.refresh_cookie_name
+    )
     if raw_token is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Refresh token required for logout")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Refresh token required for logout",
+        )
 
     decoded = None
     try:
@@ -305,8 +327,11 @@ async def get_me(
 ) -> UserRead:
     user = await session.get(User, current_user.id)
     if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     return _user_to_read(user)
+
 
 class TelegramAuthResponse(BaseModel):
     access_token: str
@@ -379,4 +404,3 @@ def _extract_client_ip(request: Request) -> str | None:
         return request.client.host
 
     return None
-main

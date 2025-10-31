@@ -34,7 +34,9 @@ class WebSocketConnector:
     def __init__(self, headers: Mapping[str, str] | None = None) -> None:
         self._headers = headers
 
-    def __call__(self, url: str) -> AbstractAsyncContextManager[Any]:  # pragma: no cover - thin wrapper
+    def __call__(
+        self, url: str
+    ) -> AbstractAsyncContextManager[Any]:  # pragma: no cover - thin wrapper
         return websockets.connect(url, extra_headers=self._headers)
 
 
@@ -96,7 +98,9 @@ class BackendClient:
                     try:
                         payload = json.loads(message)
                     except json.JSONDecodeError as exc:  # pragma: no cover - defensive
-                        raise BackendError("Received invalid JSON from the backend") from exc
+                        raise BackendError(
+                            "Received invalid JSON from the backend"
+                        ) from exc
                     yield GenerationUpdate.model_validate(payload)
         except websockets.WebSocketException as exc:  # pragma: no cover - defensive
             raise BackendError("WebSocket connection failed") from exc
@@ -165,5 +169,7 @@ class GenerationService:
         return result
 
 
-async def _noop_progress_callback(_: GenerationUpdate) -> None:  # pragma: no cover - trivial
+async def _noop_progress_callback(
+    _: GenerationUpdate,
+) -> None:  # pragma: no cover - trivial
     await asyncio.sleep(0)

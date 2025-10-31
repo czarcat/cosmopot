@@ -19,7 +19,9 @@ async def _verify(async_client: AsyncClient, token: str) -> None:
     assert response.status_code == 200
 
 
-async def _login(async_client: AsyncClient, email: str, password: str) -> dict[str, object]:
+async def _login(
+    async_client: AsyncClient, email: str, password: str
+) -> dict[str, object]:
     response = await async_client.post(
         "/api/v1/auth/login",
         json={"email": email, "password": password},

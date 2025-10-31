@@ -4,8 +4,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
-import backend.payments.models  # noqa: F401 - ensure models are registered with SQLAlchemy metadata
 import backend.generation.models  # noqa: F401 - ensure generation models are registered
+import backend.payments.models  # noqa: F401 - ensure models are registered with SQLAlchemy metadata
 from backend.api.middleware import CorrelationIdMiddleware, RequestLoggingMiddleware
 from backend.api.routes import load_routers
 from backend.auth.middleware import CurrentUserMiddleware
@@ -15,7 +15,9 @@ from backend.core.lifespan import create_lifespan
 from backend.core.logging import configure_logging
 
 
-def _register_middlewares(app: FastAPI, settings: Settings, token_service: TokenService) -> None:
+def _register_middlewares(
+    app: FastAPI, settings: Settings, token_service: TokenService
+) -> None:
     if settings.cors_allow_origins:
         app.add_middleware(
             CORSMiddleware,
@@ -61,19 +63,11 @@ def create_app() -> FastAPI:
     app.state.bot_runtime = None
     app.openapi_tags = [
         {"name": "health", "description": "Service health check operations"},
-feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
-feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
         {"name": "auth", "description": "Authentication and session management"},
-
-p0-feat-user-api-profile-rbac-sessions-balance-tests-openapi
         {
             "name": "users",
             "description": "User profile management, balance adjustments, session lifecycle, and GDPR stubs.",
         },
-main
-
-        {"name": "auth", "description": "Authentication operations"},
-main
     ]
 
     _register_middlewares(app, settings, token_service)

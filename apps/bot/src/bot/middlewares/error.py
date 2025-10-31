@@ -40,7 +40,9 @@ class ErrorHandlingMiddleware(BaseMiddleware):
                     await message.answer(
                         "⚠️ An unexpected error occurred. Please try again later.",
                     )
-                except Exception:  # pragma: no cover - network issues should not fail tests
+                except (
+                    Exception
+                ):  # pragma: no cover - network issues should not fail tests
                     self._logger.warning("failed_to_notify_user", chat_id=chat_id)
             return None
 

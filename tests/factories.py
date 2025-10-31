@@ -62,7 +62,9 @@ def user_profile_create_factory(
     )
 
 
-def user_session_create_factory(user_id: int, *, expires_in: int = 3600) -> UserSessionCreate:
+def user_session_create_factory(
+    user_id: int, *, expires_in: int = 3600
+) -> UserSessionCreate:
     expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
     return UserSessionCreate(
         user_id=user_id,

@@ -1,14 +1,14 @@
 """create user domain tables
 
 Revision ID: 0001_create_user_domain
-Revises: 
+Revises:
 Create Date: 2024-10-30 11:23:00.000000
 """
 
 from __future__ import annotations
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "0001_create_user_domain"
@@ -24,7 +24,10 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=120), nullable=False, unique=True),
         sa.Column("level", sa.String(length=50), nullable=False),
         sa.Column(
-            "monthly_cost", sa.Numeric(12, 2), nullable=False, server_default=sa.text("0")
+            "monthly_cost",
+            sa.Numeric(12, 2),
+            nullable=False,
+            server_default=sa.text("0"),
         ),
         sa.Column(
             "created_at",
@@ -55,7 +58,9 @@ def upgrade() -> None:
             "balance", sa.Numeric(12, 2), nullable=False, server_default=sa.text("0")
         ),
         sa.Column("subscription_id", sa.BigInteger(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("1")),
+        sa.Column(
+            "is_active", sa.Boolean(), nullable=False, server_default=sa.text("1")
+        ),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),

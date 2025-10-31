@@ -3,8 +3,13 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Protocol
 
-from yookassa import Configuration, Payment as YooPayment
-from yookassa.domain.exceptions import YooKassaError
+from yookassa import Configuration
+from yookassa import Payment as YooPayment
+
+try:  # pragma: no cover - compatibility layer for SDK import changes
+    from yookassa.exceptions import YooKassaError
+except ImportError:  # pragma: no cover
+    from yookassa.domain.exceptions import YooKassaError
 
 from .exceptions import PaymentGatewayError
 
@@ -12,7 +17,9 @@ from .exceptions import PaymentGatewayError
 class PaymentGateway(Protocol):
     """Protocol describing the operations required from a payment provider."""
 
-    async def create_payment(self, payload: dict[str, Any], idempotency_key: str) -> dict[str, Any]:
+    async def create_payment(
+        self, payload: dict[str, Any], idempotency_key: str
+    ) -> dict[str, Any]:
         """Create a payment with the provider and return its serialised response."""
 
 
@@ -28,7 +35,9 @@ class YooKassaGateway:
         self._secret_key = secret_key
         Configuration.configure(self._shop_id, self._secret_key)
 
-    async def create_payment(self, payload: dict[str, Any], idempotency_key: str) -> dict[str, Any]:
+    async def create_payment(
+        self, payload: dict[str, Any], idempotency_key: str
+    ) -> dict[str, Any]:
         def _call() -> dict[str, Any]:
             Configuration.configure(self._shop_id, self._secret_key)
             result = YooPayment.create(payload, idempotency_key)

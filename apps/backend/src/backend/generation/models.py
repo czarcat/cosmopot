@@ -25,7 +25,9 @@ class GenerationTask(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     user_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     prompt: Mapped[str] = mapped_column(String(1024), nullable=False)
-    parameters: Mapped[dict[str, Any]] = mapped_column(JSONType(), default_factory=dict, nullable=False)
+    parameters: Mapped[dict[str, Any]] = mapped_column(
+        JSONType(), default_factory=dict, nullable=False
+    )
     status: Mapped[GenerationTaskStatus] = mapped_column(
         Enum(GenerationTaskStatus, name="generation_task_status", native_enum=False),
         nullable=False,
@@ -36,7 +38,9 @@ class GenerationTask(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     s3_bucket: Mapped[str] = mapped_column(String(128), nullable=False)
     s3_key: Mapped[str] = mapped_column(String(512), nullable=False)
     input_url: Mapped[str | None] = mapped_column(String(2048))
-    metadata: Mapped[dict[str, Any]] = mapped_column(JSONType(), default_factory=dict, nullable=False)
+    metadata: Mapped[dict[str, Any]] = mapped_column(
+        JSONType(), default_factory=dict, nullable=False
+    )
     error_message: Mapped[str | None] = mapped_column(String(512))
 
     events: Mapped[list["GenerationTaskEvent"]] = relationship(

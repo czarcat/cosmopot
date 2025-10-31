@@ -10,7 +10,6 @@ from httpx import AsyncClient
 from redis.asyncio import Redis
 
 from backend.core.config import Settings
-
 from bot.handlers import get_routers
 from bot.middlewares import (
     DependencyInjectionMiddleware,
@@ -97,7 +96,9 @@ class BotRuntime:
             redis = Redis.from_url(self._settings.redis.url)
 
         self._redis = redis
-        storage = RedisStorage(redis=redis, key_builder=DefaultKeyBuilder(with_bot_id=False))
+        storage = RedisStorage(
+            redis=redis, key_builder=DefaultKeyBuilder(with_bot_id=False)
+        )
         self._storage = storage
         return storage
 

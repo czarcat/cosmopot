@@ -21,7 +21,9 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._header_name = header_name
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         request_id = request.headers.get(self._header_name, str(uuid.uuid4()))
         bind_request_context(request_id=request_id)
         request.state.request_id = request_id
@@ -42,7 +44,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._logger: Logger = structlog.get_logger("backend.request")
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         start = time.perf_counter()
         client = request.client.host if request.client is not None else "unknown"
         path = request.url.path

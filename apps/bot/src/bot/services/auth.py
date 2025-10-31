@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -44,6 +44,7 @@ class TelegramAuthResult(BaseModel):
             return self.access_token
         return f"{self.access_token[:4]}…{self.access_token[-4:]}"
 
+
 class TelegramAuthGateway:
     """Client responsible for exchanging Telegram identities for backend JWTs."""
 
@@ -76,14 +77,25 @@ class TelegramAuthGateway:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
             text = exc.response.text.strip() or exc.response.reason_phrase
-            raise BotAuthenticationError(text, status_code=exc.response.status_code) from exc
-        except httpx.HTTPError as exc:  # pragma: no cover - network level errors are rare in tests
-            raise BotAuthenticationError("Failed to call backend authentication endpoint") from exc
+            raise BotAuthenticationError(
+                text, status_code=exc.response.status_code
+            ) from exc
+        except (
+            httpx.HTTPError
+        ) as exc:  # pragma: no cover - network level errors are rare in tests
+            raise BotAuthenticationError(
+                "Failed to call backend authentication endpoint"
+            ) from exc
 
         try:
             result = TelegramAuthResult.model_validate(response.json())
-        except (TypeError, ValidationError) as exc:  # pragma: no cover - validated upstream in tests
-            raise BotAuthenticationError("Received invalid authentication payload from backend") from exc
+        except (
+            TypeError,
+            ValidationError,
+        ) as exc:  # pragma: no cover - validated upstream in tests
+            raise BotAuthenticationError(
+                "Received invalid authentication payload from backend"
+            ) from exc
 
         return result
 
@@ -100,7 +112,9 @@ class TelegramAuthGateway:
         }
 
         # Remove fields that are None to match Telegram's canonical form.
-        filtered = {key: value for key, value in raw_payload.items() if value is not None}
+        filtered = {
+            key: value for key, value in raw_payload.items() if value is not None
+        }
         signature = self._sign(filtered)
 
         return TelegramLoginPayload.model_validate({**filtered, "hash": signature})
@@ -110,7 +124,9 @@ class TelegramAuthGateway:
         for key, value in sorted(payload.items()):
             items.append(f"{key}={self._stringify(value)}")
         data_check_string = "\n".join(items)
-        digest = hmac.new(self._secret, data_check_string.encode("utf-8"), hashlib.sha256)
+        digest = hmac.new(
+            self._secret, data_check_string.encode("utf-8"), hashlib.sha256
+        )
         return digest.hexdigest()
 
     @staticmethod
@@ -118,5 +134,5 @@ class TelegramAuthGateway:
         if isinstance(value, bool):
             return "true" if value else "false"
         if isinstance(value, datetime):
-            return str(int(value.replace(tzinfo=timezone.utc).timestamp()))
+            return str(int(value.replace(tzinfo=UTC).timestamp()))
         return str(value)

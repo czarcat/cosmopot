@@ -11,11 +11,8 @@ from backend.auth.rate_limiter import RateLimiter
 from backend.core.config import Settings
 from backend.core.redis import close_redis, init_redis
 from backend.db.session import dispose_engine, get_engine
-feat/ws-tasks-auth-redis-broadcaster-tests-docs
 from backend.generation.broadcaster import TaskStatusBroadcaster
-
 from bot import BotRuntime
-main
 
 
 def create_lifespan(settings: Settings) -> Lifespan[FastAPI]:

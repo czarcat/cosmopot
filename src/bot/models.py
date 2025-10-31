@@ -152,5 +152,7 @@ def format_history(items: Iterable[GenerationHistoryItem]) -> str:
         found = True
         lines.append(item.to_message())
     if not found:
-        lines.append("No generation history yet. Use /generate to create something new!")
+        lines.append(
+            "No generation history yet. Use /generate to create something new!"
+        )
     return "\n".join(lines)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jwt
@@ -69,7 +69,7 @@ class TelegramLoginPayload(BaseModel):
 
     @property
     def auth_datetime(self) -> datetime:
-        return datetime.fromtimestamp(self.auth_date, tz=timezone.utc)
+        return datetime.fromtimestamp(self.auth_date, tz=UTC)
 
     def data_check_items(self) -> list[tuple[str, str]]:
         payload = self.model_dump(exclude_none=True)
@@ -158,7 +158,7 @@ class TelegramAuthService:
             raise TelegramAuthSignatureError("Invalid Telegram payload signature")
 
     def _enforce_replay_protection(self, payload: TelegramLoginPayload) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         auth_datetime = payload.auth_datetime
         if auth_datetime > now + timedelta(minutes=5):
             # Auth date should never be in the future. Treat as suspicious.

@@ -6,16 +6,19 @@ from typing import Any
 
 import httpx
 import pytest
-
 from backend.app.worker.banana import GeminiNanoClient, GeminiResult
 
 
 class _FakeResponse(httpx.Response):
     def __init__(self, data: dict[str, Any]) -> None:
-        super().__init__(status_code=200, request=httpx.Request("POST", "https://api"), json=data)
+        super().__init__(
+            status_code=200, request=httpx.Request("POST", "https://api"), json=data
+        )
 
 
-def test_gemini_client_retries_exponential_backoff(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_gemini_client_retries_exponential_backoff(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     calls: list[int] = []
 
     payload = {

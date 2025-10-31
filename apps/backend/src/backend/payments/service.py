@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import datetime as dt
 import hashlib
 import hmac
 import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -52,14 +52,18 @@ class PaymentService:
         self._notifier = notifier or LoggingPaymentNotifier()
         self._logger = structlog.get_logger(__name__)
 
-    async def create_payment(self, session: AsyncSession, user: User, request: PaymentRequest) -> Payment:
+    async def create_payment(
+        self, session: AsyncSession, user: User, request: PaymentRequest
+    ) -> Payment:
         plan = self._resolve_plan(request.plan_code)
         subscription = await self._get_subscription(session, plan.subscription_level)
 
         currency = plan.currency or self._settings.payments.default_currency
         amount = plan.amount.quantize(Decimal("0.01"))
 
-        idempotency_key = request.idempotency_key or self._generate_idempotency_key(user.id)
+        idempotency_key = request.idempotency_key or self._generate_idempotency_key(
+            user.id
+        )
         existing = await self._find_payment(session, user.id, idempotency_key)
         if existing is not None:
             self._logger.info(
@@ -80,7 +84,9 @@ class PaymentService:
             cancel_url=request.cancel_url,
         )
 
-        provider_response = await self._gateway.create_payment(provider_payload, idempotency_key=idempotency_key)
+        provider_response = await self._gateway.create_payment(
+            provider_payload, idempotency_key=idempotency_key
+        )
         provider_payment_id = provider_response.get("id")
         if not provider_payment_id:
             raise PaymentGatewayError("YooKassa response missing payment identifier")
@@ -126,7 +132,9 @@ class PaymentService:
         await session.refresh(payment)
         return payment
 
-    async def process_webhook(self, session: AsyncSession, payload: dict[str, Any]) -> Payment:
+    async def process_webhook(
+        self, session: AsyncSession, payload: dict[str, Any]
+    ) -> Payment:
         event_name = payload.get("event")
         provider_object = payload.get("object") or {}
         provider_payment_id = provider_object.get("id")
@@ -135,7 +143,9 @@ class PaymentService:
 
         payment = await self._lock_payment_by_provider_id(session, provider_payment_id)
         if payment is None:
-            raise PaymentNotFoundError(f"Payment with provider id '{provider_payment_id}' not found")
+            raise PaymentNotFoundError(
+                f"Payment with provider id '{provider_payment_id}' not found"
+            )
 
         new_status = self._map_webhook_status(event_name, provider_object.get("status"))
         previous_status = payment.status
@@ -158,20 +168,39 @@ class PaymentService:
         if new_status is not payment.status:
             payment.status = new_status
             now = self._now()
-            if new_status is PaymentStatus.SUCCEEDED and previous_status is not PaymentStatus.SUCCEEDED:
+            if (
+                new_status is PaymentStatus.SUCCEEDED
+                and previous_status is not PaymentStatus.SUCCEEDED
+            ):
                 payment.captured_at = now
                 user = await self._activate_subscription(session, payment)
                 metadata_updates["activated_at"] = now.isoformat()
                 await self._notify(user, payment, new_status, payload)
-            elif new_status in {PaymentStatus.CANCELED, PaymentStatus.FAILED, PaymentStatus.REFUNDED}:
+            elif new_status in {
+                PaymentStatus.CANCELED,
+                PaymentStatus.FAILED,
+                PaymentStatus.REFUNDED,
+            }:
                 payment.canceled_at = now
                 cancellation = provider_object.get("cancellation_details") or {}
                 failure = provider_object.get("failure") or {}
-                payment.failure_reason = cancellation.get("reason") or failure.get("description")
+                payment.failure_reason = cancellation.get("reason") or failure.get(
+                    "description"
+                )
                 metadata_updates["cancellation_details"] = cancellation or failure
-                await self._notify(await session.get(User, payment.user_id), payment, new_status, payload)
+                await self._notify(
+                    await session.get(User, payment.user_id),
+                    payment,
+                    new_status,
+                    payload,
+                )
             else:
-                await self._notify(await session.get(User, payment.user_id), payment, new_status, payload)
+                await self._notify(
+                    await session.get(User, payment.user_id),
+                    payment,
+                    new_status,
+                    payload,
+                )
 
         confirmation_url = self._extract_confirmation_url(provider_object)
         if confirmation_url:
@@ -182,7 +211,9 @@ class PaymentService:
 
         return payment
 
-    def verify_webhook_signature(self, signature_header: str | None, raw_body: bytes) -> None:
+    def verify_webhook_signature(
+        self, signature_header: str | None, raw_body: bytes
+    ) -> None:
         if not signature_header:
             raise PaymentSignatureError("Missing Content-Hmac header")
 
@@ -220,7 +251,9 @@ class PaymentService:
             return
         await self._notifier.notify(user, payment, status, context)
 
-    async def _activate_subscription(self, session: AsyncSession, payment: Payment) -> User | None:
+    async def _activate_subscription(
+        self, session: AsyncSession, payment: Payment
+    ) -> User | None:
         stmt = select(User).where(User.id == payment.user_id).with_for_update()
         result = await session.execute(stmt)
         user = result.scalar_one_or_none()
@@ -249,12 +282,16 @@ class PaymentService:
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def _get_subscription(self, session: AsyncSession, level: str) -> Subscription:
+    async def _get_subscription(
+        self, session: AsyncSession, level: str
+    ) -> Subscription:
         stmt = select(Subscription).where(Subscription.level == level)
         result = await session.execute(stmt)
         subscription = result.scalar_one_or_none()
         if subscription is None:
-            raise PaymentPlanNotFoundError(f"Subscription level '{level}' is not configured in the database")
+            raise PaymentPlanNotFoundError(
+                f"Subscription level '{level}' is not configured in the database"
+            )
         return subscription
 
     async def _find_payment(
@@ -337,7 +374,9 @@ class PaymentService:
         }
         return mapping.get((status or "").lower(), PaymentStatus.PENDING)
 
-    def _map_webhook_status(self, event_name: str | None, status: str | None) -> PaymentStatus:
+    def _map_webhook_status(
+        self, event_name: str | None, status: str | None
+    ) -> PaymentStatus:
         event_mapping = {
             "payment.succeeded": PaymentStatus.SUCCEEDED,
             "payment.waiting_for_capture": PaymentStatus.WAITING_FOR_CAPTURE,
@@ -355,10 +394,12 @@ class PaymentService:
             return confirmation.get("confirmation_url") or confirmation.get("url")
         return None
 
-    def _apply_metadata_updates(self, payment: Payment, updates: dict[str, Any]) -> None:
+    def _apply_metadata_updates(
+        self, payment: Payment, updates: dict[str, Any]
+    ) -> None:
         metadata = dict(payment.metadata or {})
         metadata.update(updates)
         payment.metadata = metadata
 
-    def _now(self) -> dt.datetime:
-        return dt.datetime.now(dt.timezone.utc)
+    def _now(self) -> datetime:
+        return datetime.now(UTC)

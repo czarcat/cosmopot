@@ -6,21 +6,21 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 
 import pytest
-from PIL import Image
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-
 from backend.app.celery_app import celery_app
 from backend.app.tasks import process_generation_task
 from backend.app.worker import bootstrap
 from backend.app.worker.banana import GeminiResult
 from backend.app.worker.config import RuntimeOverrides, WorkerSettings
 from backend.app.worker.storage import InMemoryStorage
+from PIL import Image
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from tests.factories import (
     generation_task_create_factory,
     prompt_create_factory,
     subscription_create_factory,
     user_create_factory,
 )
+
 from user_service import repository, services
 from user_service.enums import GenerationTaskStatus
 from user_service.models import Base, Subscription
@@ -36,7 +36,10 @@ class DummyBananaClient:
         image = Image.new("RGB", (512, 512), color="blue")
         buffer = io.BytesIO()
         image.save(buffer, format="JPEG")
-        self.metadata = {"model": "gemini-nano", "parameters": payload.get("parameters", {})}
+        self.metadata = {
+            "model": "gemini-nano",
+            "parameters": payload.get("parameters", {}),
+        }
         return GeminiResult(image_bytes=buffer.getvalue(), metadata=self.metadata or {})
 
     def close(self) -> None:  # pragma: no cover - interface parity
@@ -73,7 +76,7 @@ class DummyNotifier:
 
 @pytest.mark.asyncio
 async def test_generation_task_pipeline_success(tmp_path) -> None:
-    database_url = f"sqlite+aiosqlite:///{tmp_path/'worker.db'}"
+    database_url = f"sqlite+aiosqlite:///{tmp_path / 'worker.db'}"
     settings = WorkerSettings(
         celery_broker_url="memory://",
         celery_result_backend="cache+memory://",
@@ -127,7 +130,9 @@ async def test_generation_task_pipeline_success(tmp_path) -> None:
                 task_data.model_copy(update={"input_asset_url": input_asset_url}),
             )
             task_id = task.id
-            storage._objects[f"{settings.s3_bucket}/{task_input_key}"] = b"{\"prompt\": \"hello\"}"
+            storage._objects[f"{settings.s3_bucket}/{task_input_key}"] = (
+                b'{"prompt": "hello"}'
+            )
             await session.commit()
 
         assert task_id is not None
@@ -141,7 +146,9 @@ async def test_generation_task_pipeline_success(tmp_path) -> None:
             assert refreshed.status == GenerationTaskStatus.SUCCEEDED
             assert refreshed.result_asset_url is not None
             assert refreshed.result_parameters["thumbnail_url"].startswith("s3://")
-            updated_subscription = await repository.get_subscription_by_id(session, subscription_id)
+            updated_subscription = await repository.get_subscription_by_id(
+                session, subscription_id
+            )
             assert isinstance(updated_subscription, Subscription)
             assert updated_subscription.quota_used == 1
 
@@ -151,7 +158,7 @@ async def test_generation_task_pipeline_success(tmp_path) -> None:
         assert any(event["status"] == "running" for event in notifier.status_events)
         assert banana.last_payload is not None
         encoded_input = banana.last_payload["input_base64"]
-        assert base64.b64decode(encoded_input) == b"{\"prompt\": \"hello\"}"
+        assert base64.b64decode(encoded_input) == b'{"prompt": "hello"}'
     finally:
         await bootstrap.shutdown()
         await engine.dispose()
@@ -159,7 +166,7 @@ async def test_generation_task_pipeline_success(tmp_path) -> None:
 
 @pytest.mark.asyncio
 async def test_generation_task_pipeline_failure_refunds_quota(tmp_path) -> None:
-    database_url = f"sqlite+aiosqlite:///{tmp_path/'worker_failure.db'}"
+    database_url = f"sqlite+aiosqlite:///{tmp_path / 'worker_failure.db'}"
     settings = WorkerSettings(
         celery_broker_url="memory://",
         celery_result_backend="cache+memory://",
@@ -231,7 +238,9 @@ async def test_generation_task_pipeline_failure_refunds_quota(tmp_path) -> None:
             refreshed = await repository.get_generation_task_by_id(session, task_id)
             assert refreshed is not None
             assert refreshed.status == GenerationTaskStatus.FAILED
-            updated_subscription = await repository.get_subscription_by_id(session, subscription_id)
+            updated_subscription = await repository.get_subscription_by_id(
+                session, subscription_id
+            )
             assert isinstance(updated_subscription, Subscription)
             assert updated_subscription.quota_used == 0
 

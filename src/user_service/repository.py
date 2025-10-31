@@ -93,7 +93,9 @@ async def get_user_by_email(session: AsyncSession, email: str) -> Optional[User]
     return result.scalar_one_or_none()
 
 
-async def adjust_user_balance(session: AsyncSession, user_id: int, delta: Decimal) -> Decimal:
+async def adjust_user_balance(
+    session: AsyncSession, user_id: int, delta: Decimal
+) -> Decimal:
     """Increment a user's balance by a delta amount within a transaction."""
 
     stmt = select(User).where(User.id == user_id).with_for_update()
@@ -158,7 +160,9 @@ async def update_profile(
     return profile
 
 
-async def get_profile_by_user_id(session: AsyncSession, user_id: int) -> Optional[UserProfile]:
+async def get_profile_by_user_id(
+    session: AsyncSession, user_id: int
+) -> Optional[UserProfile]:
     stmt = select(UserProfile).where(UserProfile.user_id == user_id)
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
@@ -182,7 +186,9 @@ async def get_active_session_by_token(
     return result.scalar_one_or_none()
 
 
-async def revoke_session(session: AsyncSession, session_token: str) -> Optional[UserSession]:
+async def revoke_session(
+    session: AsyncSession, session_token: str
+) -> Optional[UserSession]:
     user_session = await get_active_session_by_token(session, session_token)
     if user_session is None:
         return None
@@ -192,7 +198,9 @@ async def revoke_session(session: AsyncSession, session_token: str) -> Optional[
     return user_session
 
 
-async def expire_session(session: AsyncSession, session_token: str) -> Optional[UserSession]:
+async def expire_session(
+    session: AsyncSession, session_token: str
+) -> Optional[UserSession]:
     stmt = select(UserSession).where(UserSession.session_token == session_token)
     result = await session.execute(stmt)
     user_session = result.scalar_one_or_none()

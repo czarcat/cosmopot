@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import datetime as dt
 import hashlib
 import secrets
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,8 +32,8 @@ class AuthResult:
     tokens: TokenPair
 
 
-def _now() -> dt.datetime:
-    return dt.datetime.now(tz=dt.timezone.utc)
+def _now() -> datetime:
+    return datetime.now(UTC)
 
 
 def _hash_token(token: str) -> str:
@@ -46,7 +46,7 @@ class AuthService:
 
     def __init__(self, token_service: TokenService) -> None:
         self._token_service = token_service
-        self._verification_expiry = dt.timedelta(hours=24)
+        self._verification_expiry = timedelta(hours=24)
 
     async def register(
         self,
@@ -57,7 +57,9 @@ class AuthService:
         role: UserRole = UserRole.USER,
     ) -> tuple[User, str]:
         normalized_email = email.strip().lower()
-        existing = await session.scalar(select(User).where(User.email == normalized_email))
+        existing = await session.scalar(
+            select(User).where(User.email == normalized_email)
+        )
         if existing is not None:
             raise EmailAlreadyRegisteredError
 

@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 from .enums import (
     GenerationTaskSource,
@@ -82,7 +89,9 @@ class UserUpdate(BaseModel):
 
     @field_validator("balance", mode="before")
     @classmethod
-    def validate_balance(cls, value: Optional[Decimal | str | int | float]) -> Optional[Decimal]:
+    def validate_balance(
+        cls, value: Optional[Decimal | str | int | float]
+    ) -> Optional[Decimal]:
         if value is None:
             return None
         return _quantize_two_places(Decimal(str(value)))

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import datetime as dt
-from typing import Optional
+from datetime import UTC, datetime
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -15,8 +14,8 @@ from backend.auth.tokens import TokenPayload, TokenService
 from backend.db.session import get_session_factory
 
 
-def _now() -> dt.datetime:
-    return dt.datetime.now(tz=dt.timezone.utc)
+def _now() -> datetime:
+    return datetime.now(UTC)
 
 
 class CurrentUserMiddleware(BaseHTTPMiddleware):
@@ -34,7 +33,9 @@ class CurrentUserMiddleware(BaseHTTPMiddleware):
         self._access_cookie_name = access_cookie_name
         self._session_factory = get_session_factory()
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         request.state.current_user = None
         token = self._extract_token(request)
 
@@ -43,7 +44,9 @@ class CurrentUserMiddleware(BaseHTTPMiddleware):
             if payload is not None:
                 async with self._session_factory() as session:
                     user = await session.get(User, payload["user_id"])
-                    session_model = await session.get(UserSession, payload["session_id"])
+                    session_model = await session.get(
+                        UserSession, payload["session_id"]
+                    )
 
                 if self._is_session_valid(user, session_model):
                     request.state.current_user = CurrentUser(
@@ -55,7 +58,7 @@ class CurrentUserMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         return response
 
-    async def _decode_token(self, token: str) -> Optional[dict[str, object]]:
+    async def _decode_token(self, token: str) -> dict[str, object] | None:
         try:
             payload = self._token_service.decode_access_token(token)
         except (InvalidTokenError, TokenExpiredError):
@@ -67,7 +70,7 @@ class CurrentUserMiddleware(BaseHTTPMiddleware):
             "role": payload.role,
         }
 
-    def _extract_token(self, request: Request) -> Optional[str]:
+    def _extract_token(self, request: Request) -> str | None:
         authorization = request.headers.get("Authorization")
         if authorization and authorization.lower().startswith("bearer "):
             return authorization.split(" ", 1)[1].strip()

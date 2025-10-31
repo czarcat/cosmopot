@@ -4,11 +4,15 @@ from __future__ import annotations
 
 from typing import Mapping, Sequence
 
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
-from aiogram.types import InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from .callbacks import ConfirmationCallback, ParameterCallback, PromptCallback, CategoryCallback
+from .callbacks import (
+    CategoryCallback,
+    ConfirmationCallback,
+    ParameterCallback,
+    PromptCallback,
+)
 from .constants import PARAMETER_PRESETS
 
 
@@ -46,7 +50,9 @@ def prompt_keyboard(category: str, prompts: Sequence[str]) -> InlineKeyboardMark
     return builder.as_markup()
 
 
-def parameter_keyboard(presets: Mapping[str, Mapping[str, object]] | None = None) -> InlineKeyboardMarkup:
+def parameter_keyboard(
+    presets: Mapping[str, Mapping[str, object]] | None = None,
+) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     data = presets or PARAMETER_PRESETS
     for key, value in data.items():

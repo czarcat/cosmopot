@@ -4,7 +4,6 @@ import asyncio
 
 from backend.core.config import get_settings
 from backend.core.logging import configure_logging
-
 from bot.runtime import BotRuntime
 
 

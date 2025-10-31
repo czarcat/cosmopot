@@ -9,8 +9,8 @@ import aio_pika
 import sentry_sdk
 from celery.result import AsyncResult
 from fastapi import FastAPI, status
-from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
+from pydantic import BaseModel
 from redis.asyncio import Redis
 from starlette.responses import RedirectResponse
 
@@ -66,7 +66,9 @@ async def lifespan(application: FastAPI):
 
     await db.wait_for_database()
 
-    redis_client = Redis.from_url(settings.redis_url, encoding="utf-8", decode_responses=True)
+    redis_client = Redis.from_url(
+        settings.redis_url, encoding="utf-8", decode_responses=True
+    )
     await redis_client.ping()
 
     rabbitmq_connection = await aio_pika.connect_robust(settings.celery_broker_url)
@@ -175,12 +177,19 @@ async def health() -> HealthResponse:
         "minio": minio_status,
     }
     overall_status: Literal["ok", "degraded"] = (
-        "ok" if all(item.status == "ok" for item in dependencies.values()) else "degraded"
+        "ok"
+        if all(item.status == "ok" for item in dependencies.values())
+        else "degraded"
     )
     return HealthResponse(status=overall_status, dependencies=dependencies)
 
 
-@app.post("/tasks/sum", response_model=TaskSubmissionResponse, tags=["Tasks"], status_code=status.HTTP_202_ACCEPTED)
+@app.post(
+    "/tasks/sum",
+    response_model=TaskSubmissionResponse,
+    tags=["Tasks"],
+    status_code=status.HTTP_202_ACCEPTED,
+)
 async def submit_sum_task(payload: SumRequest) -> TaskSubmissionResponse:
     task = compute_sum.delay(payload.a, payload.b)
     return TaskSubmissionResponse(task_id=task.id)

@@ -58,9 +58,7 @@ async def permanently_delete_account(session: AsyncSession, user: User) -> None:
     await repository.hard_delete_user(session, user)
 
 
-async def open_session(
-    session: AsyncSession, data: UserSessionCreate
-) -> UserSession:
+async def open_session(session: AsyncSession, data: UserSessionCreate) -> UserSession:
     return await repository.create_session(session, data)
 
 
@@ -163,7 +161,9 @@ async def increment_subscription_usage_by(
 ) -> Subscription:
     """Convenience wrapper to adjust a subscription's usage counters."""
 
-    updated = await repository.increment_subscription_usage(session, subscription, amount)
+    updated = await repository.increment_subscription_usage(
+        session, subscription, amount
+    )
     await session.refresh(subscription)
     return updated
 

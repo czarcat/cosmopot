@@ -16,7 +16,9 @@ async def test_token_service_roundtrip(configure_settings) -> None:
 
     user_id = uuid.uuid4()
     session_id = uuid.uuid4()
-    token_pair = service.create_token_pair(user_id=user_id, session_id=session_id, role="user")
+    token_pair = service.create_token_pair(
+        user_id=user_id, session_id=session_id, role="user"
+    )
 
     access_payload = service.decode_access_token(token_pair.access_token)
     assert access_payload.subject == user_id
@@ -36,7 +38,9 @@ async def test_token_service_type_enforcement(configure_settings) -> None:
 
     user_id = uuid.uuid4()
     session_id = uuid.uuid4()
-    access_token, _ = service.create_access_token(user_id=user_id, session_id=session_id, role="user")
+    access_token, _ = service.create_access_token(
+        user_id=user_id, session_id=session_id, role="user"
+    )
 
     with pytest.raises(InvalidTokenError):
         service.decode_refresh_token(access_token)

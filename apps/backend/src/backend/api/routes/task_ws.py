@@ -3,15 +3,15 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, status
 from fastapi.websockets import WebSocket, WebSocketDisconnect
-from starlette.websockets import WebSocketState
 from redis.asyncio.client import PubSub
+from starlette.websockets import WebSocketState
 
 from backend.db.session import get_session_factory
 from backend.generation.broadcaster import TaskStatusBroadcaster
@@ -28,9 +28,13 @@ _INACTIVITY_TIMEOUT = 60.0
 @router.websocket("/tasks/{task_id}")
 async def task_updates(websocket: WebSocket, task_id: UUID) -> None:
     redis = getattr(websocket.app.state, "redis", None)
-    broadcaster: TaskStatusBroadcaster | None = getattr(websocket.app.state, "task_broadcaster", None)
+    broadcaster: TaskStatusBroadcaster | None = getattr(
+        websocket.app.state, "task_broadcaster", None
+    )
     if redis is None or broadcaster is None:
-        await websocket.close(code=status.WS_1011_INTERNAL_ERROR, reason="Task updates unavailable")
+        await websocket.close(
+            code=status.WS_1011_INTERNAL_ERROR, reason="Task updates unavailable"
+        )
         return
 
     user_id: int | None = None
@@ -40,7 +44,10 @@ async def task_updates(websocket: WebSocket, task_id: UUID) -> None:
         try:
             user_id = int(user_id_header)
         except ValueError:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid authentication header")
+            await websocket.close(
+                code=status.WS_1008_POLICY_VIOLATION,
+                reason="Invalid authentication header",
+            )
             return
     else:
         session_data = getattr(websocket, "session", None)
@@ -53,19 +60,26 @@ async def task_updates(websocket: WebSocket, task_id: UUID) -> None:
                 elif isinstance(candidate, str) and candidate.isdigit():
                     user_id = int(candidate)
     if user_id is None:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Missing authentication context")
+        await websocket.close(
+            code=status.WS_1008_POLICY_VIOLATION,
+            reason="Missing authentication context",
+        )
         return
 
     session_factory = get_session_factory()
     async with session_factory() as session:
         user = await get_user_with_related(session, user_id)
         if user is None or not user.is_active or user.deleted_at is not None:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="User not authorised")
+            await websocket.close(
+                code=status.WS_1008_POLICY_VIOLATION, reason="User not authorised"
+            )
             return
 
         task = await session.get(GenerationTask, task_id)
         if task is None or task.user_id != user.id:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Task not found")
+            await websocket.close(
+                code=status.WS_1008_POLICY_VIOLATION, reason="Task not found"
+            )
             return
 
         await session.refresh(task)
@@ -91,19 +105,30 @@ async def task_updates(websocket: WebSocket, task_id: UUID) -> None:
         while True:
             try:
                 message = await asyncio.wait_for(
-                    pubsub.get_message(ignore_subscribe_messages=True, timeout=_HEARTBEAT_INTERVAL),
+                    pubsub.get_message(
+                        ignore_subscribe_messages=True, timeout=_HEARTBEAT_INTERVAL
+                    ),
                     timeout=_INACTIVITY_TIMEOUT,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 idle = time.monotonic() - last_activity
                 if idle >= _INACTIVITY_TIMEOUT:
-                    await websocket.close(code=status.WS_1011_INTERNAL_ERROR, reason="Task updates timed out")
-                    logger.warning("task_ws_timeout", task_id=str(task_id), user_id=user_id)
+                    await websocket.close(
+                        code=status.WS_1011_INTERNAL_ERROR,
+                        reason="Task updates timed out",
+                    )
+                    logger.warning(
+                        "task_ws_timeout", task_id=str(task_id), user_id=user_id
+                    )
                     break
 
                 sent = await _send_safe(websocket, _heartbeat_payload())
                 if not sent:
-                    logger.info("task_ws_heartbeat_skipped", task_id=str(task_id), user_id=user_id)
+                    logger.info(
+                        "task_ws_heartbeat_skipped",
+                        task_id=str(task_id),
+                        user_id=user_id,
+                    )
                     break
                 last_activity = time.monotonic()
                 continue
@@ -111,7 +136,11 @@ async def task_updates(websocket: WebSocket, task_id: UUID) -> None:
             if message is None:
                 sent = await _send_safe(websocket, _heartbeat_payload())
                 if not sent:
-                    logger.info("task_ws_heartbeat_skipped", task_id=str(task_id), user_id=user_id)
+                    logger.info(
+                        "task_ws_heartbeat_skipped",
+                        task_id=str(task_id),
+                        user_id=user_id,
+                    )
                     break
                 last_activity = time.monotonic()
                 continue
@@ -122,16 +151,22 @@ async def task_updates(websocket: WebSocket, task_id: UUID) -> None:
 
             sent = await _send_safe(websocket, payload)
             if not sent:
-                logger.info("task_ws_send_failed", task_id=str(task_id), user_id=user_id)
+                logger.info(
+                    "task_ws_send_failed", task_id=str(task_id), user_id=user_id
+                )
                 break
             last_activity = time.monotonic()
 
             if payload.get("terminal"):
                 await websocket.close(code=status.WS_1000_NORMAL_CLOSURE)
-                logger.info("task_ws_terminal_update", task_id=str(task_id), user_id=user_id)
+                logger.info(
+                    "task_ws_terminal_update", task_id=str(task_id), user_id=user_id
+                )
                 break
     except WebSocketDisconnect:
-        logger.info("task_ws_client_disconnected", task_id=str(task_id), user_id=user_id)
+        logger.info(
+            "task_ws_client_disconnected", task_id=str(task_id), user_id=user_id
+        )
     finally:
         await _close_pubsub(pubsub, channel)
 
@@ -175,5 +210,5 @@ def _decode_pubsub_message(message: dict[str, Any]) -> dict[str, Any] | None:
 def _heartbeat_payload() -> dict[str, Any]:
     return {
         "type": "heartbeat",
-        "sent_at": datetime.now(timezone.utc).isoformat(),
+        "sent_at": datetime.now(UTC).isoformat(),
     }

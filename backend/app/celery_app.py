@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
-from celery import Celery
-from celery import signals
+from celery import Celery, signals
 
 from .worker.bootstrap import initialise, shutdown
 from .worker.config import WorkerSettings

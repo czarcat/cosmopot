@@ -48,7 +48,9 @@ async def initialise(overrides: RuntimeOverrides | None = None) -> RuntimeState:
         if overrides.session_factory is not None:
             session_factory = overrides.session_factory  # type: ignore[assignment]
             bound_engine = getattr(session_factory, "bind", None)
-            engine_for_scope = bound_engine if isinstance(bound_engine, AsyncEngine) else None
+            engine_for_scope = (
+                bound_engine if isinstance(bound_engine, AsyncEngine) else None
+            )
             use_session_factory(session_factory, engine=engine_for_scope)
         else:
             managed_engine = create_engine(settings.database_url)

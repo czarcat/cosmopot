@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import datetime as dt
 import uuid
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -42,13 +42,17 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int = Field(..., description="Access token lifetime in seconds")
-    refresh_expires_in: int = Field(..., description="Refresh token lifetime in seconds")
+    refresh_expires_in: int = Field(
+        ..., description="Refresh token lifetime in seconds"
+    )
     session_id: uuid.UUID
     user: UserRead
 
 
 class RefreshRequest(BaseModel):
-    refresh_token: str | None = Field(default=None, description="Optional refresh token override")
+    refresh_token: str | None = Field(
+        default=None, description="Optional refresh token override"
+    )
 
 
 class LogoutRequest(BaseModel):
@@ -57,4 +61,4 @@ class LogoutRequest(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
-    timestamp: dt.datetime = Field(default_factory=lambda: dt.datetime.now(tz=dt.timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))

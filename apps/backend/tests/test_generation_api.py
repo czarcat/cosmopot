@@ -11,11 +11,11 @@ import pytest
 from httpx import AsyncClient
 
 pytest.importorskip("moto")
-from moto import mock_aws  # type: ignore
+from unittest.mock import AsyncMock
 
+from moto import mock_aws  # type: ignore
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from unittest.mock import AsyncMock
 
 from backend.generation.enums import GenerationTaskStatus
 from backend.generation.models import GenerationTask
@@ -72,7 +72,9 @@ def rabbit_stub(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     async def _connect_stub(url: str):  # noqa: ARG001
         return connection
 
-    monkeypatch.setattr("backend.generation.service.aio_pika.connect_robust", _connect_stub)
+    monkeypatch.setattr(
+        "backend.generation.service.aio_pika.connect_robust", _connect_stub
+    )
 
     return {
         "published": published,
@@ -154,7 +156,9 @@ async def test_generation_flow_success(
         assert task.s3_key.startswith(f"input/{user.id}/")
         assert task.metadata["filename"] == "seed.png"
 
-        result = await session.execute(select(Subscription).where(Subscription.user_id == user.id))
+        result = await session.execute(
+            select(Subscription).where(Subscription.user_id == user.id)
+        )
         subscription = result.scalar_one()
         assert subscription.quota_used == 1
 
@@ -169,7 +173,9 @@ async def test_generation_flow_success(
         aws_access_key_id="test-access",
         aws_secret_access_key="test-secret",
     )
-    stored = s3_client.get_object(Bucket="test-generation", Key=message["payload"]["s3_key"])
+    stored = s3_client.get_object(
+        Bucket="test-generation", Key=message["payload"]["s3_key"]
+    )
     assert stored["Body"].read() == PNG_PIXEL
 
     status_response = await async_client.get(
@@ -200,7 +206,9 @@ async def test_generation_quota_exhausted(
     s3_mock,
     rabbit_stub,
 ) -> None:
-    user = await _create_user_with_subscription(session_factory, quota_limit=1, quota_used=1)
+    user = await _create_user_with_subscription(
+        session_factory, quota_limit=1, quota_used=1
+    )
 
     response = await async_client.post(
         "/api/v1/generate",
@@ -274,7 +282,11 @@ async def test_generation_tasks_pagination(
                 id=uuid4(),
                 user_id=user.id,
                 prompt=f"Task {index}",
-                parameters={"width": 512, "height": 512, "model": "stable-diffusion-xl"},
+                parameters={
+                    "width": 512,
+                    "height": 512,
+                    "model": "stable-diffusion-xl",
+                },
                 status=GenerationTaskStatus.COMPLETED,
                 priority=1,
                 subscription_tier="standard",

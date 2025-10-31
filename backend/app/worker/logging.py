@@ -35,15 +35,12 @@ def configure_logging(level: str = "INFO") -> None:
     )
 
     structlog.configure(
-        processors=
-        [
+        processors=[
             merge_contextvars,
             structlog.processors.TimeStamper(fmt="iso", utc=True),
             structlog.stdlib.add_log_level,
             structlog.stdlib.add_logger_name,
-            structlog.processors.StackInfoRenderer(
-                omit_if_debug=True
-            ),
+            structlog.processors.StackInfoRenderer(omit_if_debug=True),
             structlog.processors.format_exc_info,
             structlog.processors.EventRenamer("message"),
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,

@@ -5,12 +5,16 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.base import StorageKey
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from bot.callbacks import CategoryCallback, ConfirmationCallback, ParameterCallback, PromptCallback
+from bot.callbacks import (
+    CategoryCallback,
+    ConfirmationCallback,
+    ParameterCallback,
+    PromptCallback,
+)
 from bot.exceptions import BackendError
 from bot.fsm import GenerationStates
 from bot.handlers import CoreCommandHandlers, GenerationHandlers
@@ -253,12 +257,16 @@ async def test_prompt_selection_moves_to_parameters(fsm_context: FSMContext) -> 
         fsm_context,
     )
 
-    assert await fsm_context.get_state() == GenerationStates.waiting_for_parameters.state
+    assert (
+        await fsm_context.get_state() == GenerationStates.waiting_for_parameters.state
+    )
     callback.answer.assert_awaited_once()
 
 
 @pytest.mark.asyncio
-async def test_parameter_selection_prepares_confirmation(fsm_context: FSMContext) -> None:
+async def test_parameter_selection_prepares_confirmation(
+    fsm_context: FSMContext,
+) -> None:
     backend = AsyncMock()
     service = AsyncMock(spec=GenerationService)
     handlers = GenerationHandlers(backend, service)
@@ -273,13 +281,17 @@ async def test_parameter_selection_prepares_confirmation(fsm_context: FSMContext
         fsm_context,
     )
 
-    assert await fsm_context.get_state() == GenerationStates.waiting_for_confirmation.state
+    assert (
+        await fsm_context.get_state() == GenerationStates.waiting_for_confirmation.state
+    )
     data = await fsm_context.get_data()
     assert data["parameters"]["quality"] == "balanced"
 
 
 @pytest.mark.asyncio
-async def test_parameter_selection_handles_unknown_preset(fsm_context: FSMContext) -> None:
+async def test_parameter_selection_handles_unknown_preset(
+    fsm_context: FSMContext,
+) -> None:
     backend = AsyncMock()
     service = AsyncMock(spec=GenerationService)
     handlers = GenerationHandlers(backend, service)
@@ -294,7 +306,9 @@ async def test_parameter_selection_handles_unknown_preset(fsm_context: FSMContex
     )
 
     callback.message.answer.assert_awaited_once()
-    assert await fsm_context.get_state() == GenerationStates.waiting_for_parameters.state
+    assert (
+        await fsm_context.get_state() == GenerationStates.waiting_for_parameters.state
+    )
 
 
 @pytest.mark.asyncio

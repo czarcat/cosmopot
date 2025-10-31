@@ -48,7 +48,9 @@ class GenerationTaskProcessor:
         notifier = self._runtime.notifier
         if not await notifier.acquire_task(self.task_id):
             self._log.info("duplicate-task-dropped")
-            return ProcessingOutcome(status="duplicate", details={"task_id": self.task_id})
+            return ProcessingOutcome(
+                status="duplicate", details={"task_id": self.task_id}
+            )
 
         await notifier.publish_status("accepted", {"task_id": self.task_id})
 
@@ -70,7 +72,9 @@ class GenerationTaskProcessor:
 
             if task.status == GenerationTaskStatus.SUCCEEDED:
                 self._log.info("task-already-complete")
-                return ProcessingOutcome(status="already-complete", details={"task_id": self.task_id})
+                return ProcessingOutcome(
+                    status="already-complete", details={"task_id": self.task_id}
+                )
 
             await repository.mark_generation_task_started(session, task)
             await session.commit()
@@ -167,21 +171,29 @@ class GenerationTaskProcessor:
         self._log.error("task-processing-failed", error=message)
 
         if session is None:
-            await notifier.publish_dead_letter({"task_id": self.task_id, "error": message})
+            await notifier.publish_dead_letter(
+                {"task_id": self.task_id, "error": message}
+            )
             return message
 
         await session.rollback()
 
         task = await repository.get_generation_task_by_id(session, self.task_id)
         if task is None:
-            await notifier.publish_dead_letter({"task_id": self.task_id, "error": message})
+            await notifier.publish_dead_letter(
+                {"task_id": self.task_id, "error": message}
+            )
             return message
 
         subscription = None
         if self._subscription_id is not None:
-            subscription = await repository.get_subscription_by_id(session, self._subscription_id)
+            subscription = await repository.get_subscription_by_id(
+                session, self._subscription_id
+            )
         elif self._quota_incremented:
-            subscription = await repository.get_active_subscription_for_user(session, task.user_id)
+            subscription = await repository.get_active_subscription_for_user(
+                session, task.user_id
+            )
 
         if self._quota_incremented and subscription is not None:
             await repository.decrement_subscription_usage(session, subscription, 1)
@@ -199,7 +211,11 @@ class GenerationTaskProcessor:
             {"task_id": self.task_id, "error": message},
         )
         await notifier.publish_dead_letter(
-            {"task_id": self.task_id, "error": message, "category": self._categorise_error(exc)}
+            {
+                "task_id": self.task_id,
+                "error": message,
+                "category": self._categorise_error(exc),
+            }
         )
         return message
 

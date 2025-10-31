@@ -5,7 +5,15 @@ import uuid
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Numeric,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.db.base import Base, JSONDataMixin, TimestampMixin, UUIDPrimaryKeyMixin
@@ -36,7 +44,9 @@ class Payment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="RUB")
     confirmation_url: Mapped[str | None] = mapped_column(String(2048))
     description: Mapped[str | None] = mapped_column(String(255))
-    metadata: Mapped[dict[str, Any]] = mapped_column(JSONType(), default_factory=dict, nullable=False)
+    metadata: Mapped[dict[str, Any]] = mapped_column(
+        JSONType(), default_factory=dict, nullable=False
+    )
     captured_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     canceled_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     failure_reason: Mapped[str | None] = mapped_column(String(255))
