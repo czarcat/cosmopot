@@ -370,7 +370,6 @@ class Settings(BaseSettings):
     cors_allow_origins: list[str] = Field(default_factory=list)
 
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
-feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
     redis: RedisSettings = Field(default_factory=RedisSettings)
     s3: S3Settings = Field(default_factory=S3Settings)
     jwt: JWTSettings = Field(default_factory=JWTSettings)
@@ -451,7 +450,6 @@ feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
             "security__jwt_access_ttl_seconds",
         ),
     )
-main
 
     @model_validator(mode="after")
     def _normalize(self) -> "Settings":

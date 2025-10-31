@@ -1,4 +1,3 @@
-p0-user-models-migration-pydantic-repo-tests
 # User Service Domain
 
 This repository defines a minimal user domain consisting of SQLAlchemy models, Alembic migrations, Pydantic schemas, repository helpers, and a lightweight service layer. The accompanying pytest suite exercises the main workflows and database constraints.
@@ -23,7 +22,6 @@ pytest
 
 The tests automatically run the Alembic migrations against an isolated SQLite database for each scenario.
 
-feat/compose-dev-stack-p0
 # Compose developer stack
 
 This repository ships a batteries-included Docker Compose stack for local development. It bundles the
@@ -293,6 +291,3 @@ ws.onclose = (event) => {
   console.log('Task stream closed', event.code);
 };
 ```
-
-main
-main

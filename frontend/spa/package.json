@@ -38,6 +38,7 @@
     "@typescript-eslint/parser": "^6.7.5",
     "@vitejs/plugin-vue": "^4.4.0",
     "@vue/test-utils": "^2.4.5",
+    "@vitest/coverage-v8": "^0.34.6",
     "eslint": "^8.52.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.28.1",
@@ -54,9 +55,9 @@
     "stylelint-config-recommended-vue": "1.5.0",
     "stylelint-config-standard": "^39.0.1",
     "stylelint-order": "^6.0.3",
-    "typescript": "^5.2.2",
+    "typescript": "~5.5.4",
     "vite": "^4.4.11",
     "vitest": "^0.34.6",
-    "vue-tsc": "^1.8.19"
+    "vue-tsc": "^2.1.6"
   }
 }

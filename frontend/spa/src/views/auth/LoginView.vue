@@ -9,7 +9,7 @@
         </p>
       </header>
 
-      <form @submit.prevent="handleSubmit" class="login-view__form">
+      <form class="login-view__form" @submit.prevent="handleSubmit">
         <label class="login-view__field">
           <span>Email</span>
           <input
@@ -18,7 +18,7 @@
             name="email"
             autocomplete="email"
             required
-          />
+          >
         </label>
 
         <label class="login-view__field">
@@ -29,7 +29,7 @@
             name="password"
             autocomplete="current-password"
             required
-          />
+          >
         </label>
 
         <button type="submit" class="login-view__submit" :disabled="isSubmitting">
