@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, List, Optional
 
@@ -150,9 +150,9 @@ class UserSessionCreate(BaseModel):
     def ensure_future(cls, value: datetime) -> datetime:
         candidate = value
         if candidate.tzinfo is None:
-            candidate = candidate.replace(tzinfo=timezone.utc)
-        candidate_utc = candidate.astimezone(timezone.utc)
-        if candidate_utc <= datetime.now(timezone.utc):
+            candidate = candidate.replace(tzinfo=UTC)
+        candidate_utc = candidate.astimezone(UTC)
+        if candidate_utc <= datetime.now(UTC):
             raise ValueError("expires_at must be in the future")
         return candidate_utc
 
@@ -201,8 +201,8 @@ class SubscriptionCreate(BaseModel):
         else:
             candidate = datetime.fromisoformat(str(value))
         if candidate.tzinfo is None:
-            candidate = candidate.replace(tzinfo=timezone.utc)
-        return candidate.astimezone(timezone.utc)
+            candidate = candidate.replace(tzinfo=UTC)
+        return candidate.astimezone(UTC)
 
     @model_validator(mode="after")
     def validate_period(self) -> "SubscriptionCreate":
@@ -230,8 +230,8 @@ class SubscriptionRenew(BaseModel):
         else:
             candidate = datetime.fromisoformat(str(value))
         if candidate.tzinfo is None:
-            candidate = candidate.replace(tzinfo=timezone.utc)
-        return candidate.astimezone(timezone.utc)
+            candidate = candidate.replace(tzinfo=UTC)
+        return candidate.astimezone(UTC)
 
 
 class PaymentCreate(BaseModel):
@@ -243,7 +243,7 @@ class PaymentCreate(BaseModel):
     provider_payment_id: Optional[str] = Field(None, max_length=120)
     provider_data: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    paid_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    paid_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config = ConfigDict(use_enum_values=True)
 
@@ -264,14 +264,14 @@ class PaymentCreate(BaseModel):
     @classmethod
     def ensure_timezone(cls, value: datetime) -> datetime:
         if value is None:
-            candidate = datetime.now(timezone.utc)
+            candidate = datetime.now(UTC)
         elif isinstance(value, datetime):
             candidate = value
         else:
             candidate = datetime.fromisoformat(str(value))
         if candidate.tzinfo is None:
-            candidate = candidate.replace(tzinfo=timezone.utc)
-        return candidate.astimezone(timezone.utc)
+            candidate = candidate.replace(tzinfo=UTC)
+        return candidate.astimezone(UTC)
 
 
 class TransactionCreate(BaseModel):

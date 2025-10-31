@@ -254,7 +254,7 @@ class TelegramAuthService:
             raise TelegramAuthInactiveUserError("User account is disabled")
 
     def _issue_token(self, user: User) -> tuple[str, datetime]:
-        issued_at = datetime.now(timezone.utc)
+        issued_at = datetime.now(UTC)
         expires_at = issued_at + self._access_ttl
         payload = {
             "sub": str(user.id),

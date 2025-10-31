@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
@@ -91,7 +91,7 @@ async def test_telegram_auth_signature_mismatch(async_client: AsyncClient) -> No
 @pytest.mark.asyncio
 async def test_telegram_auth_rejects_replay(async_client: AsyncClient) -> None:
     stale_payload = build_payload(
-        auth_date=datetime.now(timezone.utc) - timedelta(days=2)
+        auth_date=datetime.now(UTC) - timedelta(days=2)
     )
 
     response = await async_client.post("/api/v1/auth/telegram", json=stale_payload)
@@ -132,11 +132,11 @@ async def test_telegram_auth_inactive_user_forbidden(async_client: AsyncClient) 
 def build_payload(
     auth_date: datetime | None = None, **overrides: Any
 ) -> dict[str, Any]:
-    moment = auth_date or datetime.now(timezone.utc)
+    moment = auth_date or datetime.now(UTC)
     if moment.tzinfo is None:
-        moment = moment.replace(tzinfo=timezone.utc)
+        moment = moment.replace(tzinfo=UTC)
     else:
-        moment = moment.astimezone(timezone.utc)
+        moment = moment.astimezone(UTC)
 
     auth_timestamp = int(moment.timestamp())
     payload = BASE_PAYLOAD | {"auth_date": auth_timestamp}

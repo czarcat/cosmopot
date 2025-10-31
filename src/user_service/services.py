@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Optional
 
@@ -137,7 +137,7 @@ async def cancel_subscription(
 ) -> Subscription:
     """Mark a subscription as canceled while preserving historical context."""
 
-    effective = effective_at or datetime.now(timezone.utc)
+    effective = effective_at or datetime.now(UTC)
 
     if subscription.status == SubscriptionStatus.CANCELED and subscription.canceled_at:
         return subscription

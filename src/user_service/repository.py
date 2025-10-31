@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any, Dict, Optional
 
@@ -117,7 +117,7 @@ async def adjust_user_balance(
 
 
 async def soft_delete_user(session: AsyncSession, user: User) -> User:
-    user.deleted_at = datetime.now(timezone.utc)
+    user.deleted_at = datetime.now(UTC)
     await session.flush()
     return user
 
@@ -192,7 +192,7 @@ async def revoke_session(
     user_session = await get_active_session_by_token(session, session_token)
     if user_session is None:
         return None
-    user_session.revoked_at = datetime.now(timezone.utc)
+    user_session.revoked_at = datetime.now(UTC)
     await session.flush()
     await session.refresh(user_session)
     return user_session
@@ -206,7 +206,7 @@ async def expire_session(
     user_session = result.scalar_one_or_none()
     if user_session is None:
         return None
-    user_session.ended_at = datetime.now(timezone.utc)
+    user_session.ended_at = datetime.now(UTC)
     await session.flush()
     await session.refresh(user_session)
     return user_session
@@ -402,7 +402,7 @@ async def mark_generation_task_queued(
     """Mark a pending task as queued for processing."""
 
     _ensure_transition_allowed(task)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if task.status != GenerationTaskStatus.QUEUED:
         task.status = GenerationTaskStatus.QUEUED
     if task.queued_at is None:
@@ -418,7 +418,7 @@ async def mark_generation_task_started(
     """Mark a queued task as actively running."""
 
     _ensure_transition_allowed(task)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     task.status = GenerationTaskStatus.RUNNING
     if task.queued_at is None:
         task.queued_at = now
@@ -443,7 +443,7 @@ async def mark_generation_task_succeeded(
     }:
         raise ValueError("task must be running or queued to complete")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     updates = data.model_dump(exclude_unset=True)
 
     task.status = GenerationTaskStatus.SUCCEEDED
@@ -467,7 +467,7 @@ async def mark_generation_task_failed(
 
     _ensure_transition_allowed(task)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     updates = data.model_dump(exclude_unset=True)
 
     task.status = GenerationTaskStatus.FAILED

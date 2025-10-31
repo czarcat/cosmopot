@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import base64
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -109,8 +109,8 @@ async def _create_user_with_subscription(
             status=SubscriptionStatus.ACTIVE,
             quota_limit=quota_limit,
             quota_used=quota_used,
-            current_period_start=datetime.now(timezone.utc) - timedelta(days=1),
-            current_period_end=datetime.now(timezone.utc) + timedelta(days=29),
+            current_period_start=datetime.now(UTC) - timedelta(days=1),
+            current_period_end=datetime.now(UTC) + timedelta(days=29),
         )
         session.add(subscription)
         await session.commit()
@@ -276,7 +276,7 @@ async def test_generation_tasks_pagination(
 ) -> None:
     user = await _create_user_with_subscription(session_factory)
     async with session_factory() as session:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for index in range(12):
             task = GenerationTask(
                 id=uuid4(),

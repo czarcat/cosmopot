@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 
 import httpx
@@ -21,7 +21,7 @@ async def test_start_command_authenticates_and_persists_state(
             json={
                 "access_token": "token-abcdef-123456",
                 "token_type": "bearer",
-                "expires_at": datetime.now(timezone.utc).isoformat(),
+                "expires_at": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -41,7 +41,7 @@ async def test_start_command_authenticates_and_persists_state(
                     "update_id": 1,
                     "message": {
                         "message_id": 1,
-                        "date": int(datetime.now(timezone.utc).timestamp()),
+                        "date": int(datetime.now(UTC).timestamp()),
                         "chat": {"id": 100, "type": "private"},
                         "from": {"id": 55, "is_bot": False, "first_name": "Ada"},
                         "text": "/start",

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from itertools import count
 from secrets import token_hex
@@ -65,7 +65,7 @@ def user_profile_create_factory(
 def user_session_create_factory(
     user_id: int, *, expires_in: int = 3600
 ) -> UserSessionCreate:
-    expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+    expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
     return UserSessionCreate(
         user_id=user_id,
         session_token=token_hex(16),
@@ -88,7 +88,7 @@ def subscription_create_factory(
     metadata: Optional[Dict[str, Any]] = None,
 ) -> SubscriptionCreate:
     index = next(_counter)
-    start = datetime.now(timezone.utc)
+    start = datetime.now(UTC)
     end = start + timedelta(days=period_days)
     return SubscriptionCreate(
         user_id=user_id,
@@ -113,7 +113,7 @@ def subscription_renew_factory(
     metadata: Optional[Dict[str, Any]] = None,
     reason: Optional[str] = "renewal",
 ) -> SubscriptionRenew:
-    end = datetime.now(timezone.utc) + timedelta(days=days)
+    end = datetime.now(UTC) + timedelta(days=days)
     return SubscriptionRenew(
         new_period_end=end,
         quota_limit=quota_limit,
@@ -144,7 +144,7 @@ def payment_create_factory(
         provider_payment_id=provider_payment_id or f"pm_{index}",
         provider_data=provider_data or {"processor": "stripe"},
         metadata=metadata or {"note": "test"},
-        paid_at=datetime.now(timezone.utc),
+        paid_at=datetime.now(UTC),
     )
 
 

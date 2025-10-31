@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from redis.asyncio import Redis  # type: ignore[import-untyped]
@@ -63,7 +63,7 @@ class RedisNotifier:
     async def publish_status(self, status: str, payload: dict[str, Any]) -> None:
         message = {
             "status": status,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "payload": payload,
         }
         await self._get_client().publish(self._status_channel, json.dumps(message))
@@ -71,7 +71,7 @@ class RedisNotifier:
     async def publish_dead_letter(self, payload: dict[str, Any]) -> None:
         message = {
             "status": "dead_letter",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "payload": payload,
         }
         await self._get_client().publish(self._dead_letter_channel, json.dumps(message))
