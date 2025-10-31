@@ -113,5 +113,19 @@ Thumbs.db
 # Local data
 *.sqlite3
 *.log
+
+# Frontend SPA artifacts
+frontend/spa/node_modules/
+frontend/spa/dist/
+frontend/spa/.vite/
+frontend/spa/coverage/
+frontend/spa/playwright-report/
+frontend/spa/test-results/
+frontend/spa/tmp/
+
+# Frontend environment templates
+!frontend/spa/.env.example
+!frontend/spa/.env.development
+!frontend/spa/.env.production
 main
 main

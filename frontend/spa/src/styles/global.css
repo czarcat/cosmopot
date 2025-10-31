@@ -1,0 +1,37 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  background: var(--surface-subtle);
+  color: var(--text-primary);
+  min-height: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+a:hover,
+a:focus-visible {
+  text-decoration: underline;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--accent-base);
+  color: var(--surface-base);
+}
+
+body {
+  line-height: 1.5;
+  font-size: 16px;
+}

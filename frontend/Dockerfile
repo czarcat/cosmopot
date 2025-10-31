@@ -1,45 +1,29 @@
 # syntax=docker/dockerfile:1.4
-FROM python:3.11-slim as builder
 
-ENV PIP_NO_CACHE_DIR=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+FROM node:20-alpine AS builder
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential gcc curl \
-    && rm -rf /var/lib/apt/lists/*
+ENV PNPM_HOME="/pnpm"
+ENV PATH="${PNPM_HOME}:${PATH}"
 
-WORKDIR /tmp/app
-COPY frontend/requirements.txt ./requirements.txt
-RUN pip install --upgrade pip \
-    && pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+RUN corepack enable && apk add --no-cache libc6-compat
 
-FROM python:3.11-slim as runtime
+WORKDIR /app
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+COPY frontend/spa/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY frontend/spa/package.json ./package.json
+RUN pnpm install --frozen-lockfile
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && useradd --system --create-home --shell /bin/bash appuser
+COPY frontend/spa ./
+RUN pnpm build
 
-WORKDIR /srv/app
-ENV PATH="/home/appuser/.local/bin:${PATH}" \
-    PYTHONPATH=/srv/app
+FROM nginx:1.25-alpine AS runtime
 
-COPY --from=builder /wheels /wheels
-COPY --from=builder /tmp/app/requirements.txt /tmp/requirements.txt
-RUN pip install --upgrade pip \
-    && pip install --no-cache-dir --find-links=/wheels -r /tmp/requirements.txt
+WORKDIR /usr/share/nginx/html
 
-COPY frontend/app ./app
-
-RUN chown -R appuser:appuser /srv/app
-USER appuser
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist ./
 
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=5s --retries=5 --start-period=20s CMD curl -f http://localhost:8080/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --retries=5 CMD wget -qO- http://localhost:8080/health || exit 1
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["nginx", "-g", "daemon off;"]

@@ -79,8 +79,6 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    volumes:
-      - ./frontend/app:/srv/app/app:delegated
     depends_on:
       backend:
         condition: service_healthy
