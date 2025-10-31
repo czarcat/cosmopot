@@ -14,18 +14,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          types: |
-            feat
-            fix
-            docs
-            style
-            refactor
-            perf
-            test
-            build
-            ci
-            chore
-            revert
+          typeRegex: '^(?i)(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)$'
           scopes: |
             backend
             bot
@@ -94,6 +83,8 @@ jobs:
             echo "  docs: update deployment guide"
             echo ""
             echo "Valid types: $VALID_TYPES"
+            echo ""
+            echo "Note: Commit messages must use lowercase types (e.g., 'fix:', not 'Fix:')"
             exit 1
           fi
           
@@ -127,6 +118,9 @@ jobs:
           echo "### Semantic Commit Format" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo '<type>[optional scope]: <description>' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo 'PR Titles: Types are case-insensitive (e.g., both "fix:" and "Fix:" are valid)' >> $GITHUB_STEP_SUMMARY
+          echo 'Commit Messages: Types must be lowercase (e.g., "fix:", not "Fix:")' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo 'Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert' >> $GITHUB_STEP_SUMMARY
           echo 'Scopes: backend, bot, frontend, worker, ci, deps, api, db, auth, docs' >> $GITHUB_STEP_SUMMARY
