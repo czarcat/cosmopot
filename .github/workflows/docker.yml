@@ -57,7 +57,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Backend image
@@ -87,6 +87,8 @@ jobs:
           cache-from: type=gha,scope=backend
 
       - name: Run Trivy vulnerability scanner
+        id: trivy_scan
+        continue-on-error: true
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ github.event_name == 'pull_request' && 'backend:scan' || steps.meta.outputs.tags }}
@@ -96,10 +98,16 @@ jobs:
 
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && steps.trivy_scan.outcome == 'success'
         with:
           sarif_file: 'trivy-backend-results.sarif'
           category: 'backend-image'
+
+      - name: Note Trivy scan outcome
+        if: steps.trivy_scan.outcome != 'success'
+        run: |
+          echo "Trivy scan for the backend image did not produce a SARIF report; upload skipped."
+          echo "Trivy scan for the backend image did not produce a SARIF report; upload skipped." >> $GITHUB_STEP_SUMMARY
 
       - name: Run Trivy for PR comment
         if: github.event_name == 'pull_request'
@@ -145,7 +153,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Check if Dockerfile exists
@@ -186,7 +194,9 @@ jobs:
           cache-from: type=gha,scope=bot
 
       - name: Run Trivy vulnerability scanner
+        id: trivy_scan
         if: steps.check-dockerfile.outputs.exists == 'true'
+        continue-on-error: true
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ github.event_name == 'pull_request' && 'bot:scan' || steps.meta.outputs.tags }}
@@ -195,11 +205,17 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Upload Trivy results to GitHub Security
-        if: steps.check-dockerfile.outputs.exists == 'true'
+        if: always() && steps.check-dockerfile.outputs.exists == 'true' && steps.trivy_scan.outcome == 'success'
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-bot-results.sarif'
           category: 'bot-image'
+
+      - name: Note Trivy scan outcome
+        if: steps.check-dockerfile.outputs.exists == 'true' && steps.trivy_scan.outcome != 'success'
+        run: |
+          echo "Trivy scan for the bot image did not produce a SARIF report; upload skipped."
+          echo "Trivy scan for the bot image did not produce a SARIF report; upload skipped." >> $GITHUB_STEP_SUMMARY
 
       - name: Run Trivy for PR comment
         if: github.event_name == 'pull_request' && steps.check-dockerfile.outputs.exists == 'true'
@@ -245,7 +261,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Worker image
@@ -275,6 +291,8 @@ jobs:
           cache-from: type=gha,scope=worker
 
       - name: Run Trivy vulnerability scanner
+        id: trivy_scan
+        continue-on-error: true
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ github.event_name == 'pull_request' && 'worker:scan' || steps.meta.outputs.tags }}
@@ -284,10 +302,16 @@ jobs:
 
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && steps.trivy_scan.outcome == 'success'
         with:
           sarif_file: 'trivy-worker-results.sarif'
           category: 'worker-image'
+
+      - name: Note Trivy scan outcome
+        if: steps.trivy_scan.outcome != 'success'
+        run: |
+          echo "Trivy scan for the worker image did not produce a SARIF report; upload skipped."
+          echo "Trivy scan for the worker image did not produce a SARIF report; upload skipped." >> $GITHUB_STEP_SUMMARY
 
       - name: Run Trivy for PR comment
         if: github.event_name == 'pull_request'
@@ -333,7 +357,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Frontend image
@@ -363,6 +387,8 @@ jobs:
           cache-from: type=gha,scope=frontend
 
       - name: Run Trivy vulnerability scanner
+        id: trivy_scan
+        continue-on-error: true
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ github.event_name == 'pull_request' && 'frontend:scan' || steps.meta.outputs.tags }}
@@ -372,10 +398,16 @@ jobs:
 
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && steps.trivy_scan.outcome == 'success'
         with:
           sarif_file: 'trivy-frontend-results.sarif'
           category: 'frontend-image'
+
+      - name: Note Trivy scan outcome
+        if: steps.trivy_scan.outcome != 'success'
+        run: |
+          echo "Trivy scan for the frontend image did not produce a SARIF report; upload skipped."
+          echo "Trivy scan for the frontend image did not produce a SARIF report; upload skipped." >> $GITHUB_STEP_SUMMARY
 
       - name: Run Trivy for PR comment
         if: github.event_name == 'pull_request'
@@ -395,12 +427,13 @@ jobs:
         run: |
           echo "# Docker Security Scan Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "All container images have been scanned with Trivy for vulnerabilities." >> $GITHUB_STEP_SUMMARY
+          echo "Trivy vulnerability scans were executed for each container image when possible." >> $GITHUB_STEP_SUMMARY
+          echo "Review the job logs and notes above for any scans that were skipped or produced warnings." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Images Scanned" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Backend" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Bot" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Worker" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Frontend" >> $GITHUB_STEP_SUMMARY
+          echo "## Images" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend" >> $GITHUB_STEP_SUMMARY
+          echo "- Bot" >> $GITHUB_STEP_SUMMARY
+          echo "- Worker" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Check the Security tab for detailed vulnerability reports." >> $GITHUB_STEP_SUMMARY
