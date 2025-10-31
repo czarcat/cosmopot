@@ -25,3 +25,10 @@ repos:
         additional_dependencies:
           - .[dev]
         args: ["apps/backend/tests"]
+  - repo: local
+    hooks:
+      - id: frontend-check
+        name: frontend quality gate
+        entry: pnpm --dir frontend/spa check
+        language: system
+        pass_filenames: false
