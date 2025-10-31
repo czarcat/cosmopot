@@ -366,35 +366,56 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Prepare coverage artifacts directory
+        run: mkdir -p coverage-artifacts
+
       - name: Download all coverage artifacts
         uses: actions/download-artifact@v4
         with:
           path: coverage-artifacts
 
       - name: Display coverage structure
-        run: ls -R coverage-artifacts
+        shell: bash
+        run: |
+          if compgen -G 'coverage-artifacts/*' > /dev/null; then
+            echo "Coverage artifacts found:"
+            ls -R coverage-artifacts
+          else
+            echo "No coverage artifacts were downloaded."
+          fi
 
       - name: Generate coverage summary
+        shell: bash
         run: |
-          echo "# Coverage Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Backend Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "# Coverage Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if compgen -G 'coverage-artifacts/*' > /dev/null; then
+            echo "Coverage artifacts were downloaded and inspected." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ No coverage artifacts were downloaded. Upstream jobs may have failed before producing coverage." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "## Backend Coverage" >> "$GITHUB_STEP_SUMMARY"
           if [ -f coverage-artifacts/coverage-backend/coverage-backend.xml ]; then
-            echo "✅ Backend tests passed with coverage" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Backend tests passed with coverage" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "❌ Backend coverage not found" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Backend coverage not found" >> "$GITHUB_STEP_SUMMARY"
           fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Bot Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "## Bot Coverage" >> "$GITHUB_STEP_SUMMARY"
           if [ -f coverage-artifacts/coverage-bot/coverage-bot.xml ]; then
-            echo "✅ Bot tests passed with coverage" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Bot tests passed with coverage" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "❌ Bot coverage not found" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Bot coverage not found" >> "$GITHUB_STEP_SUMMARY"
           fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Frontend Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "## Frontend Coverage" >> "$GITHUB_STEP_SUMMARY"
           if [ -d coverage-artifacts/coverage-frontend ]; then
-            echo "✅ Frontend tests passed with coverage" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Frontend tests passed with coverage" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "❌ Frontend coverage not found" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Frontend coverage not found" >> "$GITHUB_STEP_SUMMARY"
           fi
