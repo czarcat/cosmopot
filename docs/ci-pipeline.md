@@ -23,7 +23,7 @@ The pipeline is powered by GitHub Actions and consists of the following workflow
 
 ### Frontend
 
-- `Lint Frontend`: Runs ESLint, Stylelint, and Prettier checks using pnpm with cached dependencies.
+- `Lint Frontend`: Runs ESLint, Stylelint, and Prettier checks using pnpm 8.15.8 with cached dependencies.
 - `Type Check Frontend`: Runs TypeScript/Vue type checks via `pnpm typecheck`.
 - `Test Frontend`: Runs Vitest with coverage enforcement (>80%).
 
@@ -72,6 +72,7 @@ The workflows assume the following GitHub Secrets are available:
 
 - Use `pre-commit run --all-files` to mirror linting and test checks locally.
 - Use `make` targets from `Makefile` for Docker-based workflows.
+- Frontend SPA requires pnpm 8.15.8. The `packageManager` field in `frontend/spa/package.json` pins the version to ensure consistency between local development and CI.
 
 ## Troubleshooting
 
