@@ -56,11 +56,15 @@ async def create_payment(
 
     try:
         async with session.begin():
-            payment = await payment_service.create_payment(session, current_user, payload.to_domain())
+            payment = await payment_service.create_payment(
+                session, current_user, payload.to_domain()
+            )
     except PaymentPlanNotFoundError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except PaymentConfigurationError as exc:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
     except PaymentGatewayError as exc:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
@@ -87,12 +91,16 @@ async def handle_yookassa_webhook(
     except PaymentSignatureError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except PaymentConfigurationError as exc:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
 
     try:
         payload = json.loads(raw_body.decode("utf-8")) if raw_body else {}
     except ValueError as exc:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid webhook payload") from exc
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, detail="Invalid webhook payload"
+        ) from exc
 
     try:
         async with session.begin():

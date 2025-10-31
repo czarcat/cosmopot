@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from collections.abc import Iterable, Sequence
+from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Iterable, Sequence
 from uuid import uuid4
 
 import structlog
@@ -64,7 +64,9 @@ def _quota_summary(subscription: Subscription | None, balance: Decimal) -> Quota
     monthly_allocation = _QUOTA_PRESETS.get(plan_key, 5_000)
     requires_top_up = balance <= Decimal("0")
     remaining_allocation = monthly_allocation if not requires_top_up else 0
-    plan_label = subscription.name if subscription and subscription.name else plan_key.title()
+    plan_label = (
+        subscription.name if subscription and subscription.name else plan_key.title()
+    )
 
     return QuotaSummary(
         plan=plan_label,
@@ -75,7 +77,7 @@ def _quota_summary(subscription: Subscription | None, balance: Decimal) -> Quota
 
 
 def _session_status(session: UserSession) -> SessionStatus:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if session.revoked_at is not None:
         return SessionStatus.REVOKED
     if session.ended_at is not None or session.expires_at <= now:
@@ -118,7 +120,9 @@ def _build_profile_payload(profile: UserProfile | None) -> UserProfileResponse |
     )
 
 
-def _build_user_payload(user: User, *, include_sessions: Iterable[UserSession]) -> UserResponse:
+def _build_user_payload(
+    user: User, *, include_sessions: Iterable[UserSession]
+) -> UserResponse:
     subscription_summary = (
         SubscriptionSummary.model_validate(user.subscription)
         if user.subscription is not None
@@ -142,7 +146,7 @@ def _build_user_payload(user: User, *, include_sessions: Iterable[UserSession]) 
 
 
 def _gdpr_response(operation: str) -> GDPRRequestResponse:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     reference = f"{operation}-{uuid4()}"
     note = (
         "Operation queued for downstream security workflow. "
@@ -167,7 +171,9 @@ async def read_current_user(
 ) -> UserResponse:
     user = await get_user_with_related(session, current_user.id)
     if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     return _build_user_payload(user, include_sessions=user.sessions or [])
 
 
@@ -183,7 +189,9 @@ async def upsert_profile(
 ) -> UserProfileResponse:
     update_data = payload.model_dump(exclude_unset=True)
     if not update_data:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No changes supplied")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No changes supplied"
+        )
 
     profile = await get_profile_by_user_id(session, current_user.id)
 
@@ -197,7 +205,9 @@ async def upsert_profile(
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()
-        logger.warning("profile_update_conflict", user_id=current_user.id, error=str(exc))
+        logger.warning(
+            "profile_update_conflict", user_id=current_user.id, error=str(exc)
+        )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Profile update violates uniqueness constraints",
@@ -218,7 +228,9 @@ async def read_balance(
 ) -> BalanceResponse:
     user = await get_user_with_related(session, current_user.id)
     if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     quotas = _quota_summary(user.subscription, user.balance or Decimal("0"))
     return BalanceResponse(balance=user.balance, quotas=quotas)
 
@@ -236,10 +248,14 @@ async def adjust_balance(
 ) -> BalanceResponse:
     is_self_adjustment = target_user.id == current_user.id
     if not is_self_adjustment and current_user.role is not UserRole.ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Administrators only")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Administrators only"
+        )
 
     if payload.delta == Decimal("0"):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Delta must be non-zero")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Delta must be non-zero"
+        )
 
     try:
         new_balance = await adjust_user_balance(session, target_user.id, payload.delta)
@@ -247,7 +263,11 @@ async def adjust_balance(
     except ValueError as exc:
         await session.rollback()
         detail = str(exc)
-        status_code = status.HTTP_404_NOT_FOUND if detail == "user not found" else status.HTTP_400_BAD_REQUEST
+        status_code = (
+            status.HTTP_404_NOT_FOUND
+            if detail == "user not found"
+            else status.HTTP_400_BAD_REQUEST
+        )
         raise HTTPException(status_code=status_code, detail=detail) from exc
 
     await session.refresh(target_user)
@@ -277,7 +297,9 @@ async def update_role(
     target_user: User = Depends(get_user_from_path),
 ) -> UserResponse:
     if current_user.role is not UserRole.ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Administrators only")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Administrators only"
+        )
 
     update_schema = UserUpdate(role=payload.role)
     await update_user(session, target_user, update_schema)
@@ -285,7 +307,9 @@ async def update_role(
 
     updated_user = await get_user_with_related(session, target_user.id)
     if updated_user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     logger.info(
         "role_updated",
@@ -294,7 +318,9 @@ async def update_role(
         new_role=str(updated_user.role),
     )
 
-    return _build_user_payload(updated_user, include_sessions=updated_user.sessions or [])
+    return _build_user_payload(
+        updated_user, include_sessions=updated_user.sessions or []
+    )
 
 
 @router.get(
@@ -308,7 +334,9 @@ async def list_sessions(
 ) -> list[SessionResponse]:
     user = await get_user_with_related(session, current_user.id)
     if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     return _build_session_payload(user.sessions or [])
 
 
@@ -326,7 +354,9 @@ async def terminate_session(
     result = await session.execute(stmt)
     user_session = result.scalar_one_or_none()
     if user_session is None or user_session.user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
+        )
 
     now = datetime.now(timezone.utc)
     if user_session.revoked_at is None:

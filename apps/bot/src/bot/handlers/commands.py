@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from aiogram import Router
 from aiogram.filters import CommandStart
@@ -34,7 +34,9 @@ async def handle_start_command(
     try:
         result = await auth_client.authenticate(message.from_user)
     except BotAuthenticationError as exc:
-        logger.warning("authentication_failed", reason=str(exc), status_code=exc.status_code)
+        logger.warning(
+            "authentication_failed", reason=str(exc), status_code=exc.status_code
+        )
         await message.answer(
             "❌ We could not authenticate you right now. Please try again later.",
         )
@@ -44,7 +46,7 @@ async def handle_start_command(
         access_token=result.access_token,
         token_type=result.token_type,
         expires_at=result.expires_at.isoformat(),
-        refreshed_at=datetime.now(tz=timezone.utc).isoformat(),
+        refreshed_at=datetime.now(UTC).isoformat(),
     )
 
     logger.info(

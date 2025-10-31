@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import datetime as dt
+from datetime import UTC, datetime
 
 import structlog
 from fastapi import APIRouter, Depends
@@ -19,7 +19,7 @@ async def health(settings: Settings = Depends(get_settings)) -> dict[str, object
         "status": "ok",
         "service": settings.project_name,
         "version": settings.project_version,
-        "timestamp": dt.datetime.now(tz=dt.timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
     logger.debug("health_status", **payload)
     return payload

@@ -38,7 +38,9 @@ def get_token_service(settings: Settings = Depends(get_settings)) -> TokenServic
     return _TOKEN_SERVICE
 
 
-def get_auth_service(token_service: TokenService = Depends(get_token_service)) -> AuthService:
+def get_auth_service(
+    token_service: TokenService = Depends(get_token_service),
+) -> AuthService:
     global _AUTH_SERVICE
     if _AUTH_SERVICE is None:
         _AUTH_SERVICE = AuthService(token_service)
@@ -66,7 +68,9 @@ def get_current_user(request: Request) -> CurrentUser:
 
 
 def require_roles(*roles: UserRole) -> Callable[[CurrentUser], CurrentUser]:
-    async def _dependency(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+    async def _dependency(
+        current_user: CurrentUser = Depends(get_current_user),
+    ) -> CurrentUser:
         if roles and current_user.role not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

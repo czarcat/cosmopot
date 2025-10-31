@@ -4,7 +4,15 @@ import datetime as dt
 import uuid
 from typing import List
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, String, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.auth.enums import UserRole
@@ -55,7 +63,9 @@ class UserSession(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     refresh_token_hash: Mapped[str] = mapped_column(String(128), nullable=False)
     user_agent: Mapped[str | None] = mapped_column(String(255))
     ip_address: Mapped[str | None] = mapped_column(String(45))
-    expires_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     revoked_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     rotated_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
@@ -75,7 +85,9 @@ class VerificationToken(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         GUID(), ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False
     )
     token_hash: Mapped[str] = mapped_column(String(128), nullable=False)
-    expires_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     used_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
     user: Mapped[User] = relationship(back_populates="verification_tokens")

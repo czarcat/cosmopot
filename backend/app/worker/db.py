@@ -23,7 +23,9 @@ def configure_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSe
 
 
 def use_session_factory(
-    session_factory: async_sessionmaker[AsyncSession], *, engine: AsyncEngine | None = None
+    session_factory: async_sessionmaker[AsyncSession],
+    *,
+    engine: AsyncEngine | None = None,
 ) -> None:
     global _engine, _session_factory
     _session_factory = session_factory

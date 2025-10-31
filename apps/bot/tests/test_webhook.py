@@ -25,7 +25,9 @@ async def test_webhook_route_dispatches_update(bot_settings, fake_redis) -> None
         )
 
     transport = httpx.MockTransport(backend_handler)
-    async with httpx.AsyncClient(transport=transport, base_url=str(bot_settings.backend_base_url)) as client:
+    async with httpx.AsyncClient(
+        transport=transport, base_url=str(bot_settings.backend_base_url)
+    ) as client:
         runtime = BotRuntime(bot_settings, http_client=client, redis=fake_redis)
         await runtime.startup()
         try:
@@ -55,8 +57,14 @@ async def test_webhook_route_dispatches_update(bot_settings, fake_redis) -> None
                 "X-Telegram-Bot-Api-Secret-Token": bot_settings.telegram_webhook_secret_token.get_secret_value()
             }
 
-            async with httpx.AsyncClient(app=app, base_url="http://testserver") as test_client:
-                response = await test_client.post("/api/v1/bot/webhook", json=update.model_dump(mode="json"), headers=headers)
+            async with httpx.AsyncClient(
+                app=app, base_url="http://testserver"
+            ) as test_client:
+                response = await test_client.post(
+                    "/api/v1/bot/webhook",
+                    json=update.model_dump(mode="json"),
+                    headers=headers,
+                )
 
             assert response.status_code == httpx.codes.NO_CONTENT
             runtime.bot.send_message.assert_awaited()

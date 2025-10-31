@@ -17,7 +17,9 @@ Handler = Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]]
 class DependencyInjectionMiddleware(BaseMiddleware):
     """Populate handler arguments with shared dependencies."""
 
-    def __init__(self, *, auth_client: TelegramAuthGateway, logger: BoundLogger) -> None:
+    def __init__(
+        self, *, auth_client: TelegramAuthGateway, logger: BoundLogger
+    ) -> None:
         super().__init__()
         self._auth_client = auth_client
         self._logger = logger

@@ -57,7 +57,9 @@ async def test_renew_subscription_resets_quota_and_logs_history(
             quota_limit=250,
             metadata={"cycle": "renewal"},
         )
-        renewed = await services.renew_subscription(session, subscription, renew_payload)
+        renewed = await services.renew_subscription(
+            session, subscription, renew_payload
+        )
 
         assert renewed.quota_used == 0
         assert renewed.quota_limit == 250
@@ -79,7 +81,9 @@ async def test_cancel_subscription_sets_flags_and_history(
             session, subscription_create_factory(user.id)
         )
 
-        canceled = await services.cancel_subscription(session, subscription, reason="user")
+        canceled = await services.cancel_subscription(
+            session, subscription, reason="user"
+        )
         assert canceled.status == SubscriptionStatus.CANCELED
         assert canceled.auto_renew is False
         assert canceled.canceled_at is not None
@@ -104,7 +108,9 @@ async def test_record_transaction_creates_payment_and_history(
             session, subscription_create_factory(user.id)
         )
 
-        payment_data = payment_create_factory(user.id, subscription.id, amount=Decimal("24.99"))
+        payment_data = payment_create_factory(
+            user.id, subscription.id, amount=Decimal("24.99")
+        )
         transaction_data = transaction_create_factory(
             user.id,
             subscription.id,
@@ -141,7 +147,9 @@ async def test_usage_increment_and_constraint(
             session, subscription_create_factory(user.id, quota_limit=10)
         )
 
-        updated = await services.increment_subscription_usage_by(session, subscription, 10)
+        updated = await services.increment_subscription_usage_by(
+            session, subscription, 10
+        )
         assert updated.quota_used == 10
 
         with pytest.raises(ValueError):

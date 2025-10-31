@@ -76,7 +76,11 @@ async def list_tasks_for_user(
 
 
 async def count_tasks_for_user(session: AsyncSession, user_id: int) -> int:
-    stmt = select(func.count()).select_from(GenerationTask).where(GenerationTask.user_id == user_id)
+    stmt = (
+        select(func.count())
+        .select_from(GenerationTask)
+        .where(GenerationTask.user_id == user_id)
+    )
     result = await session.execute(stmt)
     return int(result.scalar() or 0)
 

@@ -14,7 +14,10 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from backend.payments.dependencies import get_payment_service, reset_payment_dependencies
+from backend.payments.dependencies import (
+    get_payment_service,
+    reset_payment_dependencies,
+)
 from backend.payments.enums import PaymentStatus
 from backend.payments.models import Payment
 from backend.payments.service import PaymentService
@@ -30,7 +33,9 @@ class StubGateway:
     def __post_init__(self) -> None:
         self.calls: list[tuple[dict[str, Any], str]] = []
 
-    async def create_payment(self, payload: dict[str, Any], idempotency_key: str) -> dict[str, Any]:
+    async def create_payment(
+        self, payload: dict[str, Any], idempotency_key: str
+    ) -> dict[str, Any]:
         self.calls.append((payload, idempotency_key))
         if self.responses:
             response = self.responses.pop(0)
@@ -47,7 +52,13 @@ class StubNotifier:
     def __init__(self) -> None:
         self.notifications: list[dict[str, Any]] = []
 
-    async def notify(self, user: User, payment: Payment, status: PaymentStatus, context: dict[str, Any]) -> None:
+    async def notify(
+        self,
+        user: User,
+        payment: Payment,
+        status: PaymentStatus,
+        context: dict[str, Any],
+    ) -> None:
         self.notifications.append(
             {
                 "user_id": user.id,
@@ -58,7 +69,9 @@ class StubNotifier:
         )
 
 
-async def _persist(session_factory: async_sessionmaker[AsyncSession], instance: Any) -> Any:
+async def _persist(
+    session_factory: async_sessionmaker[AsyncSession], instance: Any
+) -> Any:
     async with session_factory() as session:
         session.add(instance)
         await session.commit()
@@ -106,7 +119,9 @@ async def payment_dependencies(app):  # type: ignore[annotation-unchecked]
         ]
     )
     notifier = StubNotifier()
-    service = PaymentService(settings=app.state.settings, gateway=gateway, notifier=notifier)
+    service = PaymentService(
+        settings=app.state.settings, gateway=gateway, notifier=notifier
+    )
     app.dependency_overrides[get_payment_service] = lambda: service
     try:
         yield gateway, notifier, service

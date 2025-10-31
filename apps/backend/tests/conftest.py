@@ -76,7 +76,9 @@ async def session_factory(tmp_path) -> AsyncIterator[async_sessionmaker[AsyncSes
 
 
 @pytest_asyncio.fixture()
-async def app(session_factory: async_sessionmaker[AsyncSession]) -> AsyncIterator[FastAPI]:
+async def app(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> AsyncIterator[FastAPI]:
     application = create_app()
 
     async def override_get_db_session() -> AsyncIterator[AsyncSession]:

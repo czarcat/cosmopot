@@ -7,8 +7,8 @@ Create Date: 2024-10-30 13:45:00.000000
 
 from __future__ import annotations
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "0002_create_billing_domain"
@@ -83,9 +83,15 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("'active'"),
         ),
-        sa.Column("auto_renew", sa.Boolean(), nullable=False, server_default=sa.text("1")),
-        sa.Column("quota_limit", sa.Integer(), nullable=False, server_default=sa.text("0")),
-        sa.Column("quota_used", sa.Integer(), nullable=False, server_default=sa.text("0")),
+        sa.Column(
+            "auto_renew", sa.Boolean(), nullable=False, server_default=sa.text("1")
+        ),
+        sa.Column(
+            "quota_limit", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
+        sa.Column(
+            "quota_used", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
         sa.Column("provider_subscription_id", sa.String(length=120), nullable=True),
         sa.Column(
             "provider_data",
@@ -293,9 +299,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "uq_transactions_provider_reference", table_name="transactions"
-    )
+    op.drop_index("uq_transactions_provider_reference", table_name="transactions")
     op.drop_index("ix_transactions_type", table_name="transactions")
     op.drop_index("ix_transactions_user_id", table_name="transactions")
     op.drop_index("ix_transactions_subscription_id", table_name="transactions")

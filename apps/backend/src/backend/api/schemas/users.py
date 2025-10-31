@@ -26,9 +26,16 @@ __all__ = [
 
 class QuotaSummary(BaseModel):
     plan: str = Field(..., description="Human readable subscription level, or 'free'.")
-    monthly_allocation: int = Field(..., ge=0, description="Placeholder quota for included credits per month.")
-    remaining_allocation: int = Field(..., ge=0, description="Placeholder for remaining credits after consumption.")
-    requires_top_up: bool = Field(..., description="Indicates whether balance is low enough to trigger a top-up warning.")
+    monthly_allocation: int = Field(
+        ..., ge=0, description="Placeholder quota for included credits per month."
+    )
+    remaining_allocation: int = Field(
+        ..., ge=0, description="Placeholder for remaining credits after consumption."
+    )
+    requires_top_up: bool = Field(
+        ...,
+        description="Indicates whether balance is low enough to trigger a top-up warning.",
+    )
 
     model_config = ConfigDict(extra="forbid")
 
@@ -97,8 +104,14 @@ class UserResponse(BaseModel):
 
 
 class BalanceAdjustmentRequest(BaseModel):
-    delta: Decimal = Field(..., description="Signed decimal amount applied to the balance.")
-    reason: Optional[str] = Field(None, max_length=255, description="Optional audit trail message for the adjustment.")
+    delta: Decimal = Field(
+        ..., description="Signed decimal amount applied to the balance."
+    )
+    reason: Optional[str] = Field(
+        None,
+        max_length=255,
+        description="Optional audit trail message for the adjustment.",
+    )
 
     model_config = ConfigDict(extra="forbid")
 

@@ -9,7 +9,12 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from .callbacks import CategoryCallback, ConfirmationCallback, ParameterCallback, PromptCallback
+from .callbacks import (
+    CategoryCallback,
+    ConfirmationCallback,
+    ParameterCallback,
+    PromptCallback,
+)
 from .constants import DEFAULT_CATEGORIES, PARAMETER_PRESETS, PROMPTS_BY_CATEGORY
 from .exceptions import BackendError, GenerationError, InvalidFileError
 from .fsm import GenerationStates
@@ -127,7 +132,9 @@ class CoreCommandHandlers:
 class GenerationHandlers:
     """FSM handlers for the multi-step generation flow."""
 
-    def __init__(self, backend: BackendClient, generation_service: GenerationService) -> None:
+    def __init__(
+        self, backend: BackendClient, generation_service: GenerationService
+    ) -> None:
         self._backend = backend
         self._service = generation_service
 
@@ -191,7 +198,9 @@ class GenerationHandlers:
             return
 
         try:
-            validate_image(file_name=file_name, file_size=file_size, mime_type=mime_type)
+            validate_image(
+                file_name=file_name, file_size=file_size, mime_type=mime_type
+            )
         except InvalidFileError as exc:
             await message.answer(str(exc))
             return

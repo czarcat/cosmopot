@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -29,7 +29,9 @@ class TaskStatusBroadcaster:
     def __init__(self, redis: Redis) -> None:
         self._redis = redis
 
-    async def publish(self, task: GenerationTask, *, event: str = "update") -> dict[str, Any]:
+    async def publish(
+        self, task: GenerationTask, *, event: str = "update"
+    ) -> dict[str, Any]:
         """Serialize the task state, persist it for reconnects, and publish to subscribers."""
 
         payload = await self._build_payload(task, event=event)
@@ -38,7 +40,12 @@ class TaskStatusBroadcaster:
         channel = self.channel_name(task.id)
         encoded = json.dumps(payload)
         await self._redis.publish(channel, encoded)
-        logger.debug("task_status_published", channel=channel, sequence=payload["sequence"], status=payload["status"])
+        logger.debug(
+            "task_status_published",
+            channel=channel,
+            sequence=payload["sequence"],
+            status=payload["status"],
+        )
         return payload
 
     async def snapshot(self, task: GenerationTask) -> dict[str, Any]:
@@ -88,7 +95,9 @@ class TaskStatusBroadcaster:
         await self._redis.set(self._state_key(task_id), encoded, ex=_STATE_TTL_SECONDS)
         await self._redis.expire(self._sequence_key(task_id), _STATE_TTL_SECONDS)
 
-    async def _build_payload(self, task: GenerationTask, *, event: str) -> dict[str, Any]:
+    async def _build_payload(
+        self, task: GenerationTask, *, event: str
+    ) -> dict[str, Any]:
         serialised = self._serialize_task(task)
         sequence = await self._redis.incr(self._sequence_key(task.id))
         serialised.update(
@@ -119,4 +128,4 @@ class TaskStatusBroadcaster:
 
 
 def _timestamp() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()

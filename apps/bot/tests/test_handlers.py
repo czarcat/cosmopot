@@ -12,7 +12,9 @@ from bot.runtime import BotRuntime
 
 
 @pytest.mark.asyncio
-async def test_start_command_authenticates_and_persists_state(bot_settings, fake_redis) -> None:
+async def test_start_command_authenticates_and_persists_state(
+    bot_settings, fake_redis
+) -> None:
     async def backend_handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
             status_code=200,
@@ -24,7 +26,9 @@ async def test_start_command_authenticates_and_persists_state(bot_settings, fake
         )
 
     transport = httpx.MockTransport(backend_handler)
-    async with httpx.AsyncClient(transport=transport, base_url=str(bot_settings.backend_base_url)) as client:
+    async with httpx.AsyncClient(
+        transport=transport, base_url=str(bot_settings.backend_base_url)
+    ) as client:
         runtime = BotRuntime(bot_settings, http_client=client, redis=fake_redis)
         await runtime.startup()
         try:

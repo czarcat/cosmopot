@@ -34,10 +34,14 @@ class S3Storage:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
         self._access_key = (
-            settings.s3.access_key_id.get_secret_value() if settings.s3.access_key_id else None
+            settings.s3.access_key_id.get_secret_value()
+            if settings.s3.access_key_id
+            else None
         )
         self._secret_key = (
-            settings.s3.secret_access_key.get_secret_value() if settings.s3.secret_access_key else None
+            settings.s3.secret_access_key.get_secret_value()
+            if settings.s3.secret_access_key
+            else None
         )
         if aioboto3 is not None:
             self._session = aioboto3.Session(  # type: ignore[call-arg]
@@ -101,7 +105,9 @@ class S3Storage:
                 ExpiresIn=self._settings.s3.presign_ttl_seconds,
             )
 
-        logger.info("generation_original_uploaded", key=key, bucket=self._settings.s3.bucket)
+        logger.info(
+            "generation_original_uploaded", key=key, bucket=self._settings.s3.bucket
+        )
         return S3UploadResult(key=key, url=url)
 
 
@@ -111,7 +117,8 @@ class QueuePublisher:
     def __init__(
         self,
         settings: Settings,
-        connection_factory: Callable[[str], Awaitable[aio_pika.RobustConnection]] | None = None,
+        connection_factory: Callable[[str], Awaitable[aio_pika.RobustConnection]]
+        | None = None,
     ) -> None:
         self._settings = settings
         self._connection_factory = connection_factory
@@ -145,7 +152,9 @@ class QueuePublisher:
                 delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
                 priority=min(priority, self._settings.rabbitmq.max_priority),
             )
-            await exchange.publish(message, routing_key=self._settings.rabbitmq.routing_key)
+            await exchange.publish(
+                message, routing_key=self._settings.rabbitmq.routing_key
+            )
             logger.info(
                 "generation_task_enqueued",
                 routing_key=self._settings.rabbitmq.routing_key,

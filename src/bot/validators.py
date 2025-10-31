@@ -40,7 +40,9 @@ def validate_image(
     """
 
     if file_size is None:
-        raise InvalidFileError("Unable to determine file size. Please re-upload the image.")
+        raise InvalidFileError(
+            "Unable to determine file size. Please re-upload the image."
+        )
 
     if file_size > MAX_IMAGE_SIZE_BYTES:
         raise InvalidFileError(
@@ -48,7 +50,9 @@ def validate_image(
         )
 
     if mime_type and mime_type not in ALLOWED_IMAGE_MIME_TYPES:
-        raise InvalidFileError("Unsupported file type. Only JPEG and PNG images are allowed.")
+        raise InvalidFileError(
+            "Unsupported file type. Only JPEG and PNG images are allowed."
+        )
 
     if file_name:
         extension = Path(file_name).suffix.lower()

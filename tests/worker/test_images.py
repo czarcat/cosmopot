@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import io
 
-from PIL import Image
-
 from backend.app.worker.images import generate_thumbnail
+from PIL import Image
 
 
 def test_generate_thumbnail_scales_image_preserving_aspect_ratio() -> None:

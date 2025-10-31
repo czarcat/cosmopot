@@ -29,7 +29,9 @@ from .factories import (
 
 
 @pytest.mark.asyncio
-async def test_create_user_and_profile(session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_create_user_and_profile(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
     async with session_factory() as session:
         user_data = user_create_factory()
         user = await create_user(session, user_data)
@@ -44,7 +46,9 @@ async def test_create_user_and_profile(session_factory: async_sessionmaker[Async
 
 
 @pytest.mark.asyncio
-async def test_unique_email_constraint(session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_unique_email_constraint(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
     async with session_factory() as session:
         user_data = user_create_factory(email="unique@example.com")
         await create_user(session, user_data)
@@ -54,7 +58,9 @@ async def test_unique_email_constraint(session_factory: async_sessionmaker[Async
 
 
 @pytest.mark.asyncio
-async def test_unique_telegram_constraint(session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_unique_telegram_constraint(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
     async with session_factory() as session:
         first_user = await create_user(session, user_create_factory())
         second_user = await create_user(session, user_create_factory())
@@ -68,7 +74,9 @@ async def test_unique_telegram_constraint(session_factory: async_sessionmaker[As
 
 
 @pytest.mark.asyncio
-async def test_adjust_balance_via_service(session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_adjust_balance_via_service(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
     async with session_factory() as session:
         user = await create_user(session, user_create_factory())
 
@@ -80,7 +88,9 @@ async def test_adjust_balance_via_service(session_factory: async_sessionmaker[As
 
 
 @pytest.mark.asyncio
-async def test_session_service_lifecycle(session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_session_service_lifecycle(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
     async with session_factory() as session:
         user = await create_user(session, user_create_factory())
         session_data = user_session_create_factory(user.id)
@@ -88,17 +98,23 @@ async def test_session_service_lifecycle(session_factory: async_sessionmaker[Asy
 
         assert user_session.revoked_at is None
 
-        revoked = await services.revoke_session_by_token(session, user_session.session_token)
+        revoked = await services.revoke_session_by_token(
+            session, user_session.session_token
+        )
         assert revoked is not None
         assert revoked.revoked_at is not None
 
-        expired = await services.expire_session_by_token(session, user_session.session_token)
+        expired = await services.expire_session_by_token(
+            session, user_session.session_token
+        )
         assert expired is not None
         assert expired.ended_at is not None
 
 
 @pytest.mark.asyncio
-async def test_cascade_delete_user(session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_cascade_delete_user(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
     async with session_factory() as session:
         subscription = await create_subscription_plan(
             session, "Pro", "gold", Decimal("19.99")
@@ -111,7 +127,9 @@ async def test_cascade_delete_user(session_factory: async_sessionmaker[AsyncSess
         await session.flush()
 
         await create_profile(session, user_profile_create_factory(user.id))
-        created_session = await create_session(session, user_session_create_factory(user.id))
+        created_session = await create_session(
+            session, user_session_create_factory(user.id)
+        )
         assert created_session is not None
 
         await hard_delete_user(session, user)
@@ -124,7 +142,9 @@ async def test_cascade_delete_user(session_factory: async_sessionmaker[AsyncSess
 
 
 @pytest.mark.asyncio
-async def test_soft_delete_sets_timestamp(session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_soft_delete_sets_timestamp(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
     async with session_factory() as session:
         user = await create_user(session, user_create_factory())
         assert user.deleted_at is None

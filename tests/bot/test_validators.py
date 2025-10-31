@@ -27,7 +27,9 @@ async def test_validate_image_accepts_valid_png() -> None:
 @pytest.mark.asyncio
 async def test_validate_image_rejects_large_file() -> None:
     with pytest.raises(InvalidFileError) as exc:
-        validate_image(file_name="image.png", file_size=11 * 1024 * 1024, mime_type="image/png")
+        validate_image(
+            file_name="image.png", file_size=11 * 1024 * 1024, mime_type="image/png"
+        )
     assert "larger than 10 MB" in str(exc.value)
 
 

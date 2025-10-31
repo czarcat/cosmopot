@@ -10,7 +10,13 @@ import pytest
 
 from bot.config import BackendConfig
 from bot.exceptions import BackendError, GenerationError
-from bot.models import GenerationJob, GenerationRequest, GenerationResult, GenerationUpdate, UserProfile
+from bot.models import (
+    GenerationJob,
+    GenerationRequest,
+    GenerationResult,
+    GenerationUpdate,
+    UserProfile,
+)
 from bot.services import BackendClient, GenerationService
 
 
@@ -48,7 +54,9 @@ async def test_backend_client_fetches_profile() -> None:
         200,
         {"id": 7, "username": "demo", "credits": 5},
     )
-    config = BackendConfig(base_url="https://api.example.test", ws_url="wss://ws.example.test")
+    config = BackendConfig(
+        base_url="https://api.example.test", ws_url="wss://ws.example.test"
+    )
     client = BackendClient(config, http_client=http_client, ws_connector=Mock())
 
     profile = await client.get_profile(7)
@@ -62,7 +70,9 @@ async def test_backend_client_fetches_profile() -> None:
 async def test_backend_client_raises_backend_error_on_failure() -> None:
     http_client = AsyncMock()
     http_client.request.return_value = _response(404, {"detail": "Missing"})
-    config = BackendConfig(base_url="https://api.example.test", ws_url="wss://ws.example.test")
+    config = BackendConfig(
+        base_url="https://api.example.test", ws_url="wss://ws.example.test"
+    )
     client = BackendClient(config, http_client=http_client, ws_connector=Mock())
 
     with pytest.raises(BackendError) as exc:
@@ -95,7 +105,9 @@ async def test_backend_client_streams_generation_updates() -> None:
         assert url.endswith("/generations/job-1")
         return ws_stub
 
-    config = BackendConfig(base_url="https://api.example.test", ws_url="wss://ws.example.test")
+    config = BackendConfig(
+        base_url="https://api.example.test", ws_url="wss://ws.example.test"
+    )
     client = BackendClient(config, http_client=http_client, ws_connector=ws_factory)
 
     updates = [update async for update in client.iterate_generation_updates("job-1")]
@@ -161,7 +173,9 @@ async def test_generation_service_executes_successfully() -> None:
 async def test_generation_service_raises_on_failed_update() -> None:
     stub = _ServiceBackendStub(
         job=GenerationJob(job_id="job-123"),
-        updates=[GenerationUpdate(status="failed", progress=None, message="No credits")],
+        updates=[
+            GenerationUpdate(status="failed", progress=None, message="No credits")
+        ],
     )
     service = GenerationService(stub)  # type: ignore[arg-type]
     request = GenerationRequest(

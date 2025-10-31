@@ -42,7 +42,9 @@ class DatabaseSettings(BaseModel):
 
     url: AsyncPostgresDsn | None = Field(
         default=None,
-        validation_alias=AliasChoices("DATABASE__URL", "database__url", "DATABASE_URL", "database_url"),
+        validation_alias=AliasChoices(
+            "DATABASE__URL", "database__url", "DATABASE_URL", "database_url"
+        ),
     )
     host: str = "localhost"
     port: int = 5432
@@ -59,9 +61,7 @@ class DatabaseSettings(BaseModel):
             return str(self.url)
 
         password = quote_plus(self.password.get_secret_value())
-        return (
-            f"postgresql+asyncpg://{self.user}:{password}@{self.host}:{self.port}/{self.name}"
-        )
+        return f"postgresql+asyncpg://{self.user}:{password}@{self.host}:{self.port}/{self.name}"
 
     @computed_field(return_type=str)
     def async_fallback_dsn(self) -> str:
@@ -77,7 +77,9 @@ class RedisSettings(BaseModel):
 
     url: str = Field(
         default="redis://localhost:6379/0",
-        validation_alias=AliasChoices("REDIS__URL", "redis__url", "REDIS_URL", "redis_url"),
+        validation_alias=AliasChoices(
+            "REDIS__URL", "redis__url", "REDIS_URL", "redis_url"
+        ),
     )
 
 
@@ -153,7 +155,9 @@ class JWTSettings(BaseModel):
 
     secret: SecretStr = Field(
         default=SecretStr("change-me"),
-        validation_alias=AliasChoices("JWT__SECRET", "jwt__secret", "JWT_SECRET", "jwt_secret"),
+        validation_alias=AliasChoices(
+            "JWT__SECRET", "jwt__secret", "JWT_SECRET", "jwt_secret"
+        ),
     )
     algorithm: str = Field(default="HS256")
     access_token_exp_minutes: int = Field(default=15, ge=1)
@@ -328,11 +332,15 @@ class YooKassaSettings(BaseModel):
 
     shop_id: str | None = Field(
         default=None,
-        validation_alias=AliasChoices("YOOKASSA__SHOP_ID", "yookassa__shop_id", "YOOKASSA_SHOP_ID"),
+        validation_alias=AliasChoices(
+            "YOOKASSA__SHOP_ID", "yookassa__shop_id", "YOOKASSA_SHOP_ID"
+        ),
     )
     secret_key: SecretStr | None = Field(
         default=None,
-        validation_alias=AliasChoices("YOOKASSA__SECRET_KEY", "yookassa__secret_key", "YOOKASSA_SECRET_KEY"),
+        validation_alias=AliasChoices(
+            "YOOKASSA__SECRET_KEY", "yookassa__secret_key", "YOOKASSA_SECRET_KEY"
+        ),
     )
     webhook_secret: SecretStr | None = Field(
         default=None,
@@ -370,7 +378,6 @@ class Settings(BaseSettings):
     cors_allow_origins: list[str] = Field(default_factory=list)
 
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
-feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
     redis: RedisSettings = Field(default_factory=RedisSettings)
     s3: S3Settings = Field(default_factory=S3Settings)
     jwt: JWTSettings = Field(default_factory=JWTSettings)
@@ -451,7 +458,6 @@ feat/auth-web-jwt-refresh-rotation-revocation-redis-rate-limit-argon2-tests
             "security__jwt_access_ttl_seconds",
         ),
     )
-main
 
     @model_validator(mode="after")
     def _normalize(self) -> "Settings":

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import datetime as dt
 import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 
 import jwt
 
@@ -18,8 +18,8 @@ class TokenPayload:
     session_id: uuid.UUID
     token_type: str
     role: str
-    expires_at: dt.datetime
-    issued_at: dt.datetime
+    expires_at: datetime
+    issued_at: datetime
 
 
 @dataclass(frozen=True)
@@ -28,8 +28,8 @@ class TokenPair:
 
     access_token: str
     refresh_token: str
-    access_expires_at: dt.datetime
-    refresh_expires_at: dt.datetime
+    access_expires_at: datetime
+    refresh_expires_at: datetime
     session_id: uuid.UUID
 
 
@@ -39,8 +39,8 @@ class TokenService:
     def __init__(self, settings: Settings) -> None:
         self._secret = settings.jwt.secret.get_secret_value()
         self._algorithm = settings.jwt.algorithm
-        self._access_expiry = dt.timedelta(minutes=settings.jwt.access_token_exp_minutes)
-        self._refresh_expiry = dt.timedelta(days=settings.jwt.refresh_token_exp_days)
+        self._access_expiry = timedelta(minutes=settings.jwt.access_token_exp_minutes)
+        self._refresh_expiry = timedelta(days=settings.jwt.refresh_token_exp_days)
 
     def create_token_pair(
         self,
@@ -69,7 +69,7 @@ class TokenService:
 
     def create_access_token(
         self, *, user_id: uuid.UUID, session_id: uuid.UUID, role: str
-    ) -> tuple[str, dt.datetime]:
+    ) -> tuple[str, datetime]:
         return self._encode(
             user_id=user_id,
             session_id=session_id,
@@ -80,7 +80,7 @@ class TokenService:
 
     def create_refresh_token(
         self, *, user_id: uuid.UUID, session_id: uuid.UUID, role: str
-    ) -> tuple[str, dt.datetime]:
+    ) -> tuple[str, datetime]:
         return self._encode(
             user_id=user_id,
             session_id=session_id,
@@ -101,10 +101,10 @@ class TokenService:
         user_id: uuid.UUID,
         session_id: uuid.UUID,
         token_type: str,
-        expires_delta: dt.timedelta,
+        expires_delta: timedelta,
         role: str,
-    ) -> tuple[str, dt.datetime]:
-        now = dt.datetime.now(tz=dt.timezone.utc)
+    ) -> tuple[str, datetime]:
+        now = datetime.now(UTC)
         expires_at = now + expires_delta
         payload = {
             "sub": str(user_id),
@@ -140,8 +140,8 @@ class TokenService:
         except (KeyError, ValueError) as exc:
             raise InvalidTokenError("Token payload is malformed") from exc
 
-        issued_at = dt.datetime.fromtimestamp(int(payload["iat"]), tz=dt.timezone.utc)
-        expires_at = dt.datetime.fromtimestamp(int(payload["exp"]), tz=dt.timezone.utc)
+        issued_at = datetime.fromtimestamp(int(payload["iat"]), tz=UTC)
+        expires_at = datetime.fromtimestamp(int(payload["exp"]), tz=UTC)
         role = str(payload.get("role", "user"))
 
         return TokenPayload(

@@ -101,9 +101,15 @@ def auth_headers(user: User) -> dict[str, str]:
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_profile(async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]) -> None:
-    subscription = await create_subscription(session_factory, name="Enterprise", level="enterprise")
-    user = await create_user(session_factory, balance=Decimal("42.50"), subscription=subscription)
+async def test_get_current_user_profile(
+    async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    subscription = await create_subscription(
+        session_factory, name="Enterprise", level="enterprise"
+    )
+    user = await create_user(
+        session_factory, balance=Decimal("42.50"), subscription=subscription
+    )
     await create_profile(session_factory, user, first_name="Eve")
     await create_session(session_factory, user)
 
@@ -151,7 +157,9 @@ async def test_upsert_profile_create_and_update(
 
 
 @pytest.mark.asyncio
-async def test_upsert_profile_conflict_raises(async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_upsert_profile_conflict_raises(
+    async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
     user_one = await create_user(session_factory)
     user_two = await create_user(session_factory)
     profile = await create_profile(session_factory, user_one, telegram_id=1234567)
@@ -166,10 +174,14 @@ async def test_upsert_profile_conflict_raises(async_client: AsyncClient, session
 
 
 @pytest.mark.asyncio
-async def test_balance_endpoints(async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_balance_endpoints(
+    async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
     user = await create_user(session_factory, balance=Decimal("5.00"))
 
-    balance_response = await async_client.get("/api/v1/users/me/balance", headers=auth_headers(user))
+    balance_response = await async_client.get(
+        "/api/v1/users/me/balance", headers=auth_headers(user)
+    )
     assert balance_response.status_code == 200
     balance_payload = balance_response.json()
     assert Decimal(str(balance_payload["balance"])) == Decimal("5.00")
@@ -186,7 +198,9 @@ async def test_balance_endpoints(async_client: AsyncClient, session_factory: asy
 
 
 @pytest.mark.asyncio
-async def test_balance_adjust_requires_admin(async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_balance_adjust_requires_admin(
+    async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
     actor = await create_user(session_factory)
     target = await create_user(session_factory, balance=Decimal("20.00"))
 
@@ -214,7 +228,9 @@ async def test_balance_adjust_missing_user_returns_404(
 
 
 @pytest.mark.asyncio
-async def test_balance_adjust_admin(async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_balance_adjust_admin(
+    async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
     admin = await create_user(session_factory, role=UserRole.ADMIN)
     target = await create_user(session_factory, balance=Decimal("12.00"))
 
@@ -234,7 +250,9 @@ async def test_balance_adjust_admin(async_client: AsyncClient, session_factory: 
 
 
 @pytest.mark.asyncio
-async def test_balance_adjust_prevents_negative(async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_balance_adjust_prevents_negative(
+    async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
     admin = await create_user(session_factory, role=UserRole.ADMIN)
     target = await create_user(session_factory, balance=Decimal("3.00"))
 
@@ -264,7 +282,9 @@ async def test_balance_adjust_rejects_zero_delta(
 
 
 @pytest.mark.asyncio
-async def test_role_update(async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_role_update(
+    async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
     admin = await create_user(session_factory, role=UserRole.ADMIN)
     target = await create_user(session_factory)
 
@@ -284,7 +304,9 @@ async def test_role_update(async_client: AsyncClient, session_factory: async_ses
 
 
 @pytest.mark.asyncio
-async def test_role_update_forbidden(async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_role_update_forbidden(
+    async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
     actor = await create_user(session_factory)
     target = await create_user(session_factory)
 
@@ -369,7 +391,9 @@ async def test_balance_adjust_race_condition(
 
 
 @pytest.mark.asyncio
-async def test_gdpr_placeholders(async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]) -> None:
+async def test_gdpr_placeholders(
+    async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
     user = await create_user(session_factory)
 
     export_response = await async_client.post(

@@ -12,8 +12,12 @@ from backend.payments.service import PaymentRequest
 class PaymentCreateRequest(BaseModel):
     """Client payload for initiating a payment."""
 
-    plan_code: str = Field(..., min_length=2, max_length=64, description="Pricing tier identifier")
-    success_url: HttpUrl = Field(..., description="URL the user should be redirected to after payment")
+    plan_code: str = Field(
+        ..., min_length=2, max_length=64, description="Pricing tier identifier"
+    )
+    success_url: HttpUrl = Field(
+        ..., description="URL the user should be redirected to after payment"
+    )
     cancel_url: HttpUrl | None = Field(
         default=None,
         description="Optional URL to return to when the payment is cancelled by the user",

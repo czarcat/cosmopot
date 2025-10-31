@@ -9,7 +9,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class WorkerSettings(BaseSettings):
     """Configuration container for the Celery worker pipeline."""
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
     celery_broker_url: str = Field(
         "memory://",
@@ -17,7 +19,9 @@ class WorkerSettings(BaseSettings):
     )
     celery_result_backend: str = Field(
         "redis://localhost:6379/1",
-        validation_alias=AliasChoices("WORKER_CELERY_RESULT_BACKEND", "CELERY_RESULT_BACKEND"),
+        validation_alias=AliasChoices(
+            "WORKER_CELERY_RESULT_BACKEND", "CELERY_RESULT_BACKEND"
+        ),
     )
     redis_pubsub_url: str = Field(
         "redis://localhost:6379/0",
@@ -74,7 +78,9 @@ class WorkerSettings(BaseSettings):
     banana_backoff_seconds: tuple[int, int, int] = Field((2, 4, 8))
 
     thumbnail_size: tuple[int, int] = Field((320, 320))
-    log_level: str = Field("INFO", validation_alias=AliasChoices("WORKER_LOG_LEVEL", "LOG_LEVEL"))
+    log_level: str = Field(
+        "INFO", validation_alias=AliasChoices("WORKER_LOG_LEVEL", "LOG_LEVEL")
+    )
 
 
 class RuntimeOverrides(BaseModel):

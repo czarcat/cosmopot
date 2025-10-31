@@ -7,7 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from user_service import repository
 from user_service.enums import GenerationTaskSource, GenerationTaskStatus, PromptSource
-from user_service.schemas import GenerationTaskCreate, GenerationTaskResultUpdate, PromptCreate
+from user_service.schemas import (
+    GenerationTaskCreate,
+    GenerationTaskResultUpdate,
+    PromptCreate,
+)
 
 from .factories import (
     generation_task_create_factory,
@@ -23,7 +27,9 @@ async def test_prompt_uniqueness_and_lookup(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     async with session_factory() as session:
-        prompt = await repository.create_prompt(session, prompt_create_factory(slug="intro"))
+        prompt = await repository.create_prompt(
+            session, prompt_create_factory(slug="intro")
+        )
         fetched = await repository.get_prompt_by_slug(session, "intro")
 
         assert fetched is not None
@@ -85,11 +91,14 @@ async def test_generation_task_failure_records_error(
         user = await repository.create_user(session, user_create_factory())
         prompt = await repository.create_prompt(session, prompt_create_factory())
         task = await repository.create_generation_task(
-            session, generation_task_create_factory(user_id=user.id, prompt_id=prompt.id)
+            session,
+            generation_task_create_factory(user_id=user.id, prompt_id=prompt.id),
         )
 
         running = await repository.mark_generation_task_started(session, task)
-        failure = generation_task_failure_update_factory(error="timeout", result_parameters={"attempt": 2})
+        failure = generation_task_failure_update_factory(
+            error="timeout", result_parameters={"attempt": 2}
+        )
         failed = await repository.mark_generation_task_failed(session, running, failure)
 
         assert failed.status == GenerationTaskStatus.FAILED

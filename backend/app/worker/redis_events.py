@@ -81,7 +81,9 @@ class RedisNotifier:
 
     async def acquire_task(self, task_id: int) -> bool:
         key = self._idempotency_key(task_id)
-        result = await self._get_client().set(key, "1", nx=True, ex=self._idempotency_ttl)
+        result = await self._get_client().set(
+            key, "1", nx=True, ex=self._idempotency_ttl
+        )
         return bool(result)
 
     async def release_task(self, task_id: int) -> None:

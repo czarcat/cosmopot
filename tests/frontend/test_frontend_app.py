@@ -7,7 +7,6 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-
 from frontend.app.gateway import AuthTokens
 from frontend.app.main import app, get_gateway
 
@@ -53,7 +52,11 @@ class DummyGateway:
                     "id": "task-1",
                     "status": "queued",
                     "prompt": "Render skyline",
-                    "parameters": {"width": 512, "height": 512, "model": "stable-diffusion-xl"},
+                    "parameters": {
+                        "width": 512,
+                        "height": 512,
+                        "model": "stable-diffusion-xl",
+                    },
                     "subscription_tier": "creator",
                     "created_at": "2023-10-31T10:00:00Z",
                     "input_url": "https://example.com/seed.png",
@@ -63,7 +66,9 @@ class DummyGateway:
         }
     )
     payment_payload: dict[str, Any] = field(
-        default_factory=lambda: {"confirmation_url": "https://payments.example/checkout"}
+        default_factory=lambda: {
+            "confirmation_url": "https://payments.example/checkout"
+        }
     )
     task_messages: list[dict[str, Any]] = field(
         default_factory=lambda: [
@@ -118,7 +123,9 @@ class DummyGateway:
         parameters: dict[str, Any],
         upload: tuple[str, bytes, str],
     ) -> tuple[dict[str, Any], AuthTokens | None]:
-        self.generation_payloads.append({"prompt": prompt, "parameters": parameters, "filename": upload[0]})
+        self.generation_payloads.append(
+            {"prompt": prompt, "parameters": parameters, "filename": upload[0]}
+        )
         return {"task_id": "task-queued", "status": "queued"}, None
 
     async def list_tasks(
@@ -200,7 +207,10 @@ def test_profile_update_success(client: TestClient, stub_gateway: DummyGateway) 
         allow_redirects=False,
     )
     assert response.status_code == 303
-    assert stub_gateway.update_payloads[-1] == {"first_name": "New", "city": "Metropolis"}
+    assert stub_gateway.update_payloads[-1] == {
+        "first_name": "New",
+        "city": "Metropolis",
+    }
 
 
 def test_generate_invalid_upload_error(client: TestClient) -> None:
@@ -215,7 +225,9 @@ def test_generate_invalid_upload_error(client: TestClient) -> None:
     assert "PNG or JPEG" in response.text
 
 
-def test_generate_success_redirects_history(client: TestClient, stub_gateway: DummyGateway) -> None:
+def test_generate_success_redirects_history(
+    client: TestClient, stub_gateway: DummyGateway
+) -> None:
     login(client)
     response = client.post(
         "/generate",

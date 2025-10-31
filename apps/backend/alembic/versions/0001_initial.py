@@ -1,14 +1,14 @@
 """No-op initial migration.
 
 Revision ID: 0001_initial
-Revises: 
+Revises:
 Create Date: 2023-10-30 11:07:00
 """
 
 from __future__ import annotations
 
-from alembic import op  # noqa: F401
 import sqlalchemy as sa  # noqa: F401
+from alembic import op  # noqa: F401
 
 # revision identifiers, used by Alembic.
 revision = "0001_initial"

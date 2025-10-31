@@ -14,11 +14,11 @@ class StorageError(RuntimeError):
 
 
 class StorageClient(Protocol):
-    async def download(self, bucket: str, key: str) -> bytes:
-        ...
+    async def download(self, bucket: str, key: str) -> bytes: ...
 
-    async def upload(self, bucket: str, key: str, data: bytes, content_type: str) -> str:
-        ...
+    async def upload(
+        self, bucket: str, key: str, data: bytes, content_type: str
+    ) -> str: ...
 
 
 @dataclass(slots=True)
@@ -79,7 +79,9 @@ class MinioStorage(StorageClient):
         except Exception as exc:  # pragma: no cover - network errors
             raise StorageError(str(exc)) from exc
 
-    async def upload(self, bucket: str, key: str, data: bytes, content_type: str) -> str:
+    async def upload(
+        self, bucket: str, key: str, data: bytes, content_type: str
+    ) -> str:
         stream = io.BytesIO(data)
         length = len(data)
 
@@ -111,6 +113,8 @@ class InMemoryStorage(StorageClient):
         except KeyError as exc:
             raise StorageError("object not found") from exc
 
-    async def upload(self, bucket: str, key: str, data: bytes, content_type: str) -> str:
+    async def upload(
+        self, bucket: str, key: str, data: bytes, content_type: str
+    ) -> str:
         self._objects[f"{bucket}/{key}"] = bytes(data)
         return f"s3://{bucket}/{key}"

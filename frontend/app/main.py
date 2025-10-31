@@ -114,7 +114,9 @@ class Settings(BaseSettings):
     backend_ws_url: str | None = None
     session_secret: str = "front-secret-key"
     max_upload_bytes: int = 8 * 1024 * 1024
-    prompt_catalog: list[dict[str, str]] = Field(default_factory=lambda: list(_PROMPT_CATALOG))
+    prompt_catalog: list[dict[str, str]] = Field(
+        default_factory=lambda: list(_PROMPT_CATALOG)
+    )
 
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -126,7 +128,9 @@ app.add_middleware(
     same_site="lax",
 )
 
-_gateway = BackendGateway(base_url=settings.backend_url, websocket_base_url=settings.backend_ws_url)
+_gateway = BackendGateway(
+    base_url=settings.backend_url, websocket_base_url=settings.backend_ws_url
+)
 app.state.gateway = _gateway
 app.state.settings = settings
 
@@ -157,7 +161,9 @@ def _get_auth_session(request: Request) -> dict[str, Any] | None:
     return auth if isinstance(auth, dict) else None
 
 
-def _store_auth_session(request: Request, tokens: AuthTokens, user_payload: dict[str, Any]) -> None:
+def _store_auth_session(
+    request: Request, tokens: AuthTokens, user_payload: dict[str, Any]
+) -> None:
     snapshot = {
         "access_token": tokens.access_token,
         "refresh_token": tokens.refresh_token,
@@ -197,7 +203,9 @@ def _clear_auth(request: Request) -> None:
 
 
 @app.get("/", response_class=HTMLResponse, name="home")
-async def home(request: Request, gateway: BackendGateway = Depends(get_gateway)) -> HTMLResponse:
+async def home(
+    request: Request, gateway: BackendGateway = Depends(get_gateway)
+) -> HTMLResponse:
     messages = _consume_flash(request)
     health: dict[str, Any] | None = None
     error: str | None = None
@@ -218,7 +226,9 @@ async def home(request: Request, gateway: BackendGateway = Depends(get_gateway))
 @app.get("/login", response_class=HTMLResponse, name="login_page")
 async def login_page(request: Request) -> HTMLResponse:
     if _get_auth_session(request):
-        return RedirectResponse(url=request.url_for("profile"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("profile"), status_code=status.HTTP_303_SEE_OTHER
+        )
     context = {
         "request": request,
         "messages": _consume_flash(request),
@@ -237,7 +247,9 @@ async def login_submit(
 ) -> HTMLResponse:
     messages = _consume_flash(request)
     if _get_auth_session(request):
-        return RedirectResponse(url=request.url_for("profile"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("profile"), status_code=status.HTTP_303_SEE_OTHER
+        )
     try:
         tokens = await gateway.login(email=email, password=password)
         user_payload, refreshed = await gateway.get_current_user(
@@ -248,7 +260,9 @@ async def login_submit(
             tokens = refreshed
         _store_auth_session(request, tokens, user_payload)
         _flash(request, "success", "Welcome back! Your dashboard is ready.")
-        return RedirectResponse(url=request.url_for("generate"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("generate"), status_code=status.HTTP_303_SEE_OTHER
+        )
     except BackendError as exc:
         context = {
             "request": request,
@@ -256,11 +270,15 @@ async def login_submit(
             "form_error": exc.message,
             "email": email,
         }
-        return templates.TemplateResponse("login.html", context, status_code=status.HTTP_400_BAD_REQUEST)
+        return templates.TemplateResponse(
+            "login.html", context, status_code=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @app.post("/logout")
-async def logout(request: Request, gateway: BackendGateway = Depends(get_gateway)) -> RedirectResponse:
+async def logout(
+    request: Request, gateway: BackendGateway = Depends(get_gateway)
+) -> RedirectResponse:
     auth = _get_auth_session(request)
     refresh_token = auth.get("refresh_token") if auth else None
     if refresh_token:
@@ -270,16 +288,22 @@ async def logout(request: Request, gateway: BackendGateway = Depends(get_gateway
             pass
     _clear_auth(request)
     _flash(request, "success", "You have been signed out.")
-    return RedirectResponse(url=request.url_for("home"), status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(
+        url=request.url_for("home"), status_code=status.HTTP_303_SEE_OTHER
+    )
 
 
 @app.get("/profile", response_class=HTMLResponse, name="profile")
-async def profile(request: Request, gateway: BackendGateway = Depends(get_gateway)) -> HTMLResponse:
+async def profile(
+    request: Request, gateway: BackendGateway = Depends(get_gateway)
+) -> HTMLResponse:
     messages = _consume_flash(request)
     auth = _get_auth_session(request)
     if not auth:
         _flash(request, "info", "Sign in to manage your profile.")
-        return RedirectResponse(url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER
+        )
     try:
         user_payload, tokens = await gateway.get_current_user(
             access_token=auth["access_token"],
@@ -289,7 +313,9 @@ async def profile(request: Request, gateway: BackendGateway = Depends(get_gatewa
     except UnauthorizedError:
         _clear_auth(request)
         _flash(request, "info", "Your session has expired. Please log in again.")
-        return RedirectResponse(url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER
+        )
     except BackendError as exc:
         context = {
             "request": request,
@@ -298,7 +324,9 @@ async def profile(request: Request, gateway: BackendGateway = Depends(get_gatewa
             "quotas": {},
             "load_error": exc.message,
         }
-        return templates.TemplateResponse("profile.html", context, status_code=status.HTTP_502_BAD_GATEWAY)
+        return templates.TemplateResponse(
+            "profile.html", context, status_code=status.HTTP_502_BAD_GATEWAY
+        )
 
     context = {
         "request": request,
@@ -323,7 +351,9 @@ async def update_profile(
     auth = _get_auth_session(request)
     if not auth:
         _flash(request, "info", "Please sign in to update your profile.")
-        return RedirectResponse(url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER
+        )
 
     payload = {
         "first_name": first_name,
@@ -336,7 +366,9 @@ async def update_profile(
     filtered = {key: value for key, value in payload.items() if value}
     if not filtered:
         _flash(request, "warning", "Add at least one field before saving.")
-        return RedirectResponse(url=request.url_for("profile"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("profile"), status_code=status.HTTP_303_SEE_OTHER
+        )
 
     try:
         _, tokens = await gateway.update_profile(
@@ -351,7 +383,9 @@ async def update_profile(
         )
         _merge_auth_session(request, tokens=refreshed, user_payload=user_payload)
         _flash(request, "success", "Profile updated successfully.")
-        return RedirectResponse(url=request.url_for("profile"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("profile"), status_code=status.HTTP_303_SEE_OTHER
+        )
     except BackendError as exc:
         messages = _consume_flash(request)
         context = {
@@ -360,19 +394,27 @@ async def update_profile(
             "user": auth.get("user", {}),
             "load_error": exc.message,
         }
-        return templates.TemplateResponse("profile.html", context, status_code=status.HTTP_400_BAD_REQUEST)
+        return templates.TemplateResponse(
+            "profile.html", context, status_code=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @app.get("/generate", response_class=HTMLResponse, name="generate")
-async def generate_page(request: Request, gateway: BackendGateway = Depends(get_gateway)) -> HTMLResponse:
+async def generate_page(
+    request: Request, gateway: BackendGateway = Depends(get_gateway)
+) -> HTMLResponse:
     messages = _consume_flash(request)
     auth = _get_auth_session(request)
     if not auth:
         _flash(request, "info", "Sign in to enqueue new generations.")
-        return RedirectResponse(url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER
+        )
 
     session_user = auth.get("user")
-    user_payload: dict[str, Any] = session_user if isinstance(session_user, dict) else {}
+    user_payload: dict[str, Any] = (
+        session_user if isinstance(session_user, dict) else {}
+    )
     try:
         user_payload, tokens = await gateway.get_current_user(
             access_token=auth["access_token"],
@@ -411,7 +453,9 @@ async def generate_submit(
     auth = _get_auth_session(request)
     if not auth:
         _flash(request, "info", "Sign in to create new generations.")
-        return RedirectResponse(url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER
+        )
 
     errors: list[str] = []
     prompt_value = prompt.strip()
@@ -491,15 +535,23 @@ async def generate_submit(
                 "scheduler": scheduler,
             },
         }
-        return templates.TemplateResponse("generate.html", context, status_code=status.HTTP_400_BAD_REQUEST)
+        return templates.TemplateResponse(
+            "generate.html", context, status_code=status.HTTP_400_BAD_REQUEST
+        )
 
-    upload_tuple = (image.filename or "upload.png", content, image.content_type or "image/png")
+    upload_tuple = (
+        image.filename or "upload.png",
+        content,
+        image.content_type or "image/png",
+    )
     try:
         task_payload, tokens = await gateway.create_generation(
             access_token=auth["access_token"],
             refresh_token=auth.get("refresh_token"),
             prompt=prompt_value,
-            parameters={key: value for key, value in parameters.items() if value is not None},
+            parameters={
+                key: value for key, value in parameters.items() if value is not None
+            },
             upload=upload_tuple,
         )
         _merge_auth_session(request, tokens=tokens)
@@ -521,10 +573,18 @@ async def generate_submit(
                 "scheduler": scheduler,
             },
         }
-        return templates.TemplateResponse("generate.html", context, status_code=status.HTTP_400_BAD_REQUEST)
+        return templates.TemplateResponse(
+            "generate.html", context, status_code=status.HTTP_400_BAD_REQUEST
+        )
 
-    _flash(request, "success", f"Generation task queued: {task_payload.get('task_id', task_payload.get('id'))}")
-    return RedirectResponse(url=request.url_for("history"), status_code=status.HTTP_303_SEE_OTHER)
+    _flash(
+        request,
+        "success",
+        f"Generation task queued: {task_payload.get('task_id', task_payload.get('id'))}",
+    )
+    return RedirectResponse(
+        url=request.url_for("history"), status_code=status.HTTP_303_SEE_OTHER
+    )
 
 
 @app.get("/history", response_class=HTMLResponse, name="history")
@@ -538,7 +598,9 @@ async def history(
     auth = _get_auth_session(request)
     if not auth:
         _flash(request, "info", "Sign in to review task history.")
-        return RedirectResponse(url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER
+        )
 
     try:
         payload, tokens = await gateway.list_tasks(
@@ -553,9 +615,16 @@ async def history(
             "request": request,
             "messages": messages + [{"level": "error", "text": exc.message}],
             "items": [],
-            "pagination": {"page": page, "page_size": page_size, "total": 0, "has_next": False},
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total": 0,
+                "has_next": False,
+            },
         }
-        return templates.TemplateResponse("history.html", context, status_code=status.HTTP_502_BAD_GATEWAY)
+        return templates.TemplateResponse(
+            "history.html", context, status_code=status.HTTP_502_BAD_GATEWAY
+        )
 
     context = {
         "request": request,
@@ -587,7 +656,9 @@ async def pricing_checkout(
     auth = _get_auth_session(request)
     if not auth:
         _flash(request, "info", "Sign in to upgrade your workspace.")
-        return RedirectResponse(url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER
+        )
 
     payload = {
         "plan_code": plan_code,
@@ -604,14 +675,24 @@ async def pricing_checkout(
         _merge_auth_session(request, tokens=tokens)
     except BackendError as exc:
         _flash(request, "error", exc.message)
-        return RedirectResponse(url=request.url_for("pricing"), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=request.url_for("pricing"), status_code=status.HTTP_303_SEE_OTHER
+        )
 
     confirmation_url = response.get("confirmation_url")
     if confirmation_url:
-        return RedirectResponse(url=confirmation_url, status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=confirmation_url, status_code=status.HTTP_303_SEE_OTHER
+        )
 
-    _flash(request, "success", "Payment created. Follow the email instructions to complete your upgrade.")
-    return RedirectResponse(url=request.url_for("pricing"), status_code=status.HTTP_303_SEE_OTHER)
+    _flash(
+        request,
+        "success",
+        "Payment created. Follow the email instructions to complete your upgrade.",
+    )
+    return RedirectResponse(
+        url=request.url_for("pricing"), status_code=status.HTTP_303_SEE_OTHER
+    )
 
 
 @app.websocket("/ws/tasks/{task_id}")
@@ -621,7 +702,11 @@ async def task_updates_ws(
     gateway: BackendGateway = Depends(get_gateway),
 ) -> None:
     await websocket.accept()
-    auth = getattr(websocket, "session", {}).get("auth") if hasattr(websocket, "session") else None
+    auth = (
+        getattr(websocket, "session", {}).get("auth")
+        if hasattr(websocket, "session")
+        else None
+    )
     if not isinstance(auth, dict) or not auth.get("user_id"):
         await websocket.close(code=4401, reason="Not authenticated")
         return
@@ -638,7 +723,9 @@ async def task_updates_ws(
         await websocket.close(code=4403, reason="Task stream unauthorized")
     except BackendError as exc:
         await websocket.send_text(json.dumps({"type": "error", "message": exc.message}))
-        await websocket.close(code=status.WS_1011_INTERNAL_ERROR, reason="Backend error")
+        await websocket.close(
+            code=status.WS_1011_INTERNAL_ERROR, reason="Backend error"
+        )
     except WebSocketDisconnect:
         return
 
