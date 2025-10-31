@@ -11,7 +11,11 @@ from backend.auth.rate_limiter import RateLimiter
 from backend.core.config import Settings
 from backend.core.redis import close_redis, init_redis
 from backend.db.session import dispose_engine, get_engine
+feat/ws-tasks-auth-redis-broadcaster-tests-docs
 from backend.generation.broadcaster import TaskStatusBroadcaster
+
+from bot import BotRuntime
+main
 
 
 def create_lifespan(settings: Settings) -> Lifespan[FastAPI]:
@@ -31,9 +35,31 @@ def create_lifespan(settings: Settings) -> Lifespan[FastAPI]:
             window_seconds=settings.rate_limit.window_seconds,
         )
 
+        bot_runtime: BotRuntime | None = None
+        if settings.telegram_bot_token is not None:
+            try:
+                bot_runtime = BotRuntime(settings)
+                await bot_runtime.startup()
+                app.state.bot_runtime = bot_runtime
+                logger.info("bot_runtime_started")
+            except Exception:
+                logger.exception("bot_runtime_start_failed")
+                raise
+        else:
+            app.state.bot_runtime = None
+
         try:
             yield
         finally:
+            if bot_runtime is not None:
+                try:
+                    await bot_runtime.shutdown()
+                    logger.info("bot_runtime_stopped")
+                except Exception:
+                    logger.exception("bot_runtime_shutdown_failed")
+                finally:
+                    app.state.bot_runtime = None
+
             app.state.rate_limiter = None
             app.state.task_broadcaster = None
             await close_redis()
