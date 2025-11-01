@@ -496,9 +496,7 @@ async def test_get_user_with_active_subscription_fallback(
     async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
 ) -> None:
     user = await create_user(session_factory, balance=Decimal("20.00"))
-    await create_active_subscription(
-        session_factory, user, tier=SubscriptionTier.PRO
-    )
+    await create_active_subscription(session_factory, user, tier=SubscriptionTier.PRO)
 
     response = await async_client.get("/api/v1/users/me", headers=auth_headers(user))
     assert response.status_code == 200
