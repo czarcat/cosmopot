@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import uuid
 from dataclasses import dataclass
-from typing import Callable
 
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession

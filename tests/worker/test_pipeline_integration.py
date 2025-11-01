@@ -3,9 +3,7 @@ from __future__ import annotations
 import base64
 import io
 from dataclasses import dataclass
-from typing import Any, Dict, List
-
-import pytest
+from typing import Any
 from backend.app.celery_app import celery_app
 from backend.app.tasks import process_generation_task
 from backend.app.worker import bootstrap
@@ -28,10 +26,10 @@ from user_service.models import Base, Subscription
 
 @dataclass
 class DummyBananaClient:
-    metadata: Dict[str, Any] | None = None
-    last_payload: Dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
+    last_payload: dict[str, Any] | None = None
 
-    def generate(self, payload: Dict[str, Any]) -> GeminiResult:
+    def generate(self, payload: dict[str, Any]) -> GeminiResult:
         self.last_payload = payload
         image = Image.new("RGB", (512, 512), color="blue")
         buffer = io.BytesIO()
@@ -48,8 +46,8 @@ class DummyBananaClient:
 
 class DummyNotifier:
     def __init__(self) -> None:
-        self.status_events: List[Dict[str, Any]] = []
-        self.dead_letters: List[Dict[str, Any]] = []
+        self.status_events: list[dict[str, Any]] = []
+        self.dead_letters: list[dict[str, Any]] = []
         self._locks: set[int] = set()
 
     async def connect(self) -> None:  # pragma: no cover - included for interface parity
@@ -67,10 +65,10 @@ class DummyNotifier:
     async def release_task(self, task_id: int) -> None:
         self._locks.discard(task_id)
 
-    async def publish_status(self, status: str, payload: Dict[str, Any]) -> None:
+    async def publish_status(self, status: str, payload: dict[str, Any]) -> None:
         self.status_events.append({"status": status, **payload})
 
-    async def publish_dead_letter(self, payload: Dict[str, Any]) -> None:
+    async def publish_dead_letter(self, payload: dict[str, Any]) -> None:
         self.dead_letters.append(payload)
 
 
@@ -188,7 +186,7 @@ async def test_generation_task_pipeline_failure_refunds_quota(tmp_path) -> None:
     notifier = DummyNotifier()
 
     class FailingBanana:
-        def generate(self, payload: Dict[str, Any]) -> GeminiResult:
+        def generate(self, payload: dict[str, Any]) -> GeminiResult:
             raise RuntimeError("gemini down")
 
         def close(self) -> None:  # pragma: no cover - interface parity

@@ -4,17 +4,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from itertools import count
 from secrets import token_hex
-from typing import Any, Dict, Optional
-
-from user_service.enums import (
-    GenerationTaskSource,
-    GenerationTaskStatus,
-    PaymentStatus,
-    PromptSource,
-    SubscriptionStatus,
-    SubscriptionTier,
-    TransactionType,
-    UserRole,
+from typing import Any, GenerationTaskStatus, PaymentStatus, PromptSource, SubscriptionStatus, SubscriptionTier, TransactionType, UserRole, 
 )
 from user_service.schemas import (
     GenerationTaskCreate,
@@ -34,7 +24,7 @@ _counter = count(1)
 
 
 def user_create_factory(
-    *, email: Optional[str] = None, role: UserRole = UserRole.USER
+    *, email: str | None = None, role: UserRole = UserRole.USER
 ) -> UserCreate:
     index = next(_counter)
     return UserCreate(
@@ -48,7 +38,7 @@ def user_create_factory(
 
 
 def user_profile_create_factory(
-    user_id: int, *, telegram_id: Optional[int] = None
+    user_id: int, *, telegram_id: int | None = None
 ) -> UserProfileCreate:
     index = next(_counter)
     return UserProfileCreate(
@@ -84,8 +74,8 @@ def subscription_create_factory(
     quota_limit: int = 1_000,
     quota_used: int = 0,
     period_days: int = 30,
-    provider_metadata: Optional[Dict[str, Any]] = None,
-    metadata: Optional[Dict[str, Any]] = None,
+    provider_metadata: dict[str, Any | None] = None,
+    metadata: dict[str, Any | None] = None,
 ) -> SubscriptionCreate:
     index = next(_counter)
     start = datetime.now(UTC)
@@ -108,10 +98,10 @@ def subscription_create_factory(
 def subscription_renew_factory(
     *,
     days: int = 30,
-    quota_limit: Optional[int] = None,
-    provider_data: Optional[Dict[str, Any]] = None,
-    metadata: Optional[Dict[str, Any]] = None,
-    reason: Optional[str] = "renewal",
+    quota_limit: int | None = None,
+    provider_data: dict[str, Any | None] = None,
+    metadata: dict[str, Any | None] = None,
+    reason: str | None = "renewal",
 ) -> SubscriptionRenew:
     end = datetime.now(UTC) + timedelta(days=days)
     return SubscriptionRenew(
@@ -125,14 +115,14 @@ def subscription_renew_factory(
 
 def payment_create_factory(
     user_id: int,
-    subscription_id: Optional[int],
+    subscription_id: int | None,
     *,
     amount: Decimal = Decimal("19.99"),
     currency: str = "usd",
     status: PaymentStatus = PaymentStatus.COMPLETED,
-    provider_payment_id: Optional[str] = None,
-    provider_data: Optional[Dict[str, Any]] = None,
-    metadata: Optional[Dict[str, Any]] = None,
+    provider_payment_id: str | None = None,
+    provider_data: dict[str, Any | None] = None,
+    metadata: dict[str, Any | None] = None,
 ) -> PaymentCreate:
     index = next(_counter)
     return PaymentCreate(
@@ -150,14 +140,14 @@ def payment_create_factory(
 
 def transaction_create_factory(
     user_id: int,
-    subscription_id: Optional[int],
+    subscription_id: int | None,
     *,
     amount: Decimal = Decimal("19.99"),
     currency: str = "usd",
     txn_type: TransactionType = TransactionType.CHARGE,
-    description: Optional[str] = None,
-    provider_reference: Optional[str] = None,
-    metadata: Optional[Dict[str, Any]] = None,
+    description: str | None = None,
+    provider_reference: str | None = None,
+    metadata: dict[str, Any | None] = None,
 ) -> TransactionCreate:
     index = next(_counter)
     return TransactionCreate(
@@ -174,9 +164,9 @@ def transaction_create_factory(
 
 def prompt_create_factory(
     *,
-    slug: Optional[str] = None,
+    slug: str | None = None,
     source: PromptSource = PromptSource.SYSTEM,
-    parameters: Optional[Dict[str, Any]] = None,
+    parameters: dict[str, Any | None] = None,
 ) -> PromptCreate:
     index = next(_counter)
     return PromptCreate(
@@ -195,7 +185,7 @@ def generation_task_create_factory(
     *,
     status: GenerationTaskStatus = GenerationTaskStatus.PENDING,
     source: GenerationTaskSource = GenerationTaskSource.API,
-    parameters: Optional[Dict[str, Any]] = None,
+    parameters: dict[str, Any | None] = None,
 ) -> GenerationTaskCreate:
     index = next(_counter)
     return GenerationTaskCreate(
@@ -212,8 +202,8 @@ def generation_task_create_factory(
 
 def generation_task_result_update_factory(
     *,
-    result_asset_url: Optional[str] = None,
-    result_parameters: Optional[Dict[str, Any]] = None,
+    result_asset_url: str | None = None,
+    result_parameters: dict[str, Any | None] = None,
 ) -> GenerationTaskResultUpdate:
     return GenerationTaskResultUpdate(
         result_asset_url=result_asset_url or "s3://tasks/results/output.png",
@@ -224,8 +214,8 @@ def generation_task_result_update_factory(
 def generation_task_failure_update_factory(
     *,
     error: str = "task failed",
-    result_asset_url: Optional[str] = None,
-    result_parameters: Optional[Dict[str, Any]] = None,
+    result_asset_url: str | None = None,
+    result_parameters: dict[str, Any | None] = None,
 ) -> GenerationTaskFailureUpdate:
     return GenerationTaskFailureUpdate(
         error=error,

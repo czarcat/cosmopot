@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 import json
 from dataclasses import dataclass
-from typing import Any, Iterable, List
+from typing import Any
 from unittest.mock import AsyncMock, Mock
 
 import httpx
@@ -119,7 +121,7 @@ async def test_backend_client_streams_generation_updates() -> None:
 @dataclass
 class _ServiceBackendStub:
     job: GenerationJob
-    updates: List[GenerationUpdate]
+    updates: list[GenerationUpdate]
     start_generation: AsyncMock | None = None
 
     def __post_init__(self) -> None:

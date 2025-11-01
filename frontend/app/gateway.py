@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any, AsyncIterator, Tuple
+from typing import Any, AsyncIterator
 from urllib.parse import urlparse, urlunparse
 
 import httpx
@@ -145,7 +145,7 @@ class BackendGateway:
         *,
         access_token: str,
         refresh_token: str | None,
-    ) -> Tuple[dict[str, Any], AuthTokens | None]:
+    ) -> tuple[dict[str, Any], AuthTokens | None]:
         response, tokens = await self._authorized_request(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -163,7 +163,7 @@ class BackendGateway:
         access_token: str,
         refresh_token: str | None,
         payload: dict[str, Any],
-    ) -> Tuple[dict[str, Any], AuthTokens | None]:
+    ) -> tuple[dict[str, Any], AuthTokens | None]:
         response, tokens = await self._authorized_request(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -184,7 +184,7 @@ class BackendGateway:
         prompt: str,
         parameters: dict[str, Any],
         upload: tuple[str, bytes, str],
-    ) -> Tuple[dict[str, Any], AuthTokens | None]:
+    ) -> tuple[dict[str, Any], AuthTokens | None]:
         data = {"prompt": prompt, "parameters": json.dumps(parameters)}
         files = {"file": upload}
         response, tokens = await self._authorized_request(
@@ -207,7 +207,7 @@ class BackendGateway:
         refresh_token: str | None,
         page: int,
         page_size: int,
-    ) -> Tuple[dict[str, Any], AuthTokens | None]:
+    ) -> tuple[dict[str, Any], AuthTokens | None]:
         params = {"page": page, "page_size": page_size}
         response, tokens = await self._authorized_request(
             access_token=access_token,
@@ -227,7 +227,7 @@ class BackendGateway:
         access_token: str,
         refresh_token: str | None,
         payload: dict[str, Any],
-    ) -> Tuple[dict[str, Any], AuthTokens | None]:
+    ) -> tuple[dict[str, Any], AuthTokens | None]:
         response, tokens = await self._authorized_request(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -280,7 +280,7 @@ class BackendGateway:
         method: str,
         path: str,
         **kwargs: Any,
-    ) -> Tuple[httpx.Response, AuthTokens | None]:
+    ) -> tuple[httpx.Response, AuthTokens | None]:
         headers = kwargs.pop("headers", {})
         headers.setdefault("Authorization", f"Bearer {access_token}")
 

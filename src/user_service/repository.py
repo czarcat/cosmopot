@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any, Dict, Optional
-
-from sqlalchemy import select
+from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -66,13 +64,13 @@ async def update_user(session: AsyncSession, user: User, data: UserUpdate) -> Us
     return user
 
 
-async def get_user_by_id(session: AsyncSession, user_id: int) -> Optional[User]:
+async def get_user_by_id(session: AsyncSession, user_id: int) -> User | None:
     stmt = select(User).where(User.id == user_id)
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
 
 
-async def get_user_with_related(session: AsyncSession, user_id: int) -> Optional[User]:
+async def get_user_with_related(session: AsyncSession, user_id: int) -> User | None:
     stmt = (
         select(User)
         .options(
@@ -87,7 +85,7 @@ async def get_user_with_related(session: AsyncSession, user_id: int) -> Optional
     return result.scalar_one_or_none()
 
 
-async def get_user_by_email(session: AsyncSession, email: str) -> Optional[User]:
+async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
     stmt = select(User).where(User.email == email)
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
@@ -162,7 +160,7 @@ async def update_profile(
 
 async def get_profile_by_user_id(
     session: AsyncSession, user_id: int
-) -> Optional[UserProfile]:
+) -> UserProfile | None:
     stmt = select(UserProfile).where(UserProfile.user_id == user_id)
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
@@ -178,7 +176,7 @@ async def create_session(session: AsyncSession, data: UserSessionCreate) -> User
 
 async def get_active_session_by_token(
     session: AsyncSession, token: str
-) -> Optional[UserSession]:
+) -> UserSession | None:
     stmt = select(UserSession).where(
         UserSession.session_token == token, UserSession.revoked_at.is_(None)
     )
@@ -188,7 +186,7 @@ async def get_active_session_by_token(
 
 async def revoke_session(
     session: AsyncSession, session_token: str
-) -> Optional[UserSession]:
+) -> UserSession | None:
     user_session = await get_active_session_by_token(session, session_token)
     if user_session is None:
         return None
@@ -200,7 +198,7 @@ async def revoke_session(
 
 async def expire_session(
     session: AsyncSession, session_token: str
-) -> Optional[UserSession]:
+) -> UserSession | None:
     stmt = select(UserSession).where(UserSession.session_token == session_token)
     result = await session.execute(stmt)
     user_session = result.scalar_one_or_none()
@@ -232,7 +230,7 @@ async def create_subscription(
 
 async def get_subscription_by_id(
     session: AsyncSession, subscription_id: int
-) -> Optional[Subscription]:
+) -> Subscription | None:
     stmt = select(Subscription).where(Subscription.id == subscription_id)
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
@@ -242,7 +240,7 @@ async def create_subscription_history_snapshot(
     session: AsyncSession,
     subscription: Subscription,
     *,
-    reason: Optional[str] = None,
+    reason: str | None = None,
 ) -> SubscriptionHistory:
     """Capture the current state of a subscription in the history table."""
 
@@ -300,7 +298,7 @@ async def decrement_subscription_usage(
 
 async def get_active_subscription_for_user(
     session: AsyncSession, user_id: int
-) -> Optional[Subscription]:
+) -> Subscription | None:
     stmt = (
         select(Subscription)
         .where(
@@ -355,7 +353,7 @@ async def create_prompt(session: AsyncSession, data: PromptCreate) -> Prompt:
     return prompt
 
 
-async def get_prompt_by_slug(session: AsyncSession, slug: str) -> Optional[Prompt]:
+async def get_prompt_by_slug(session: AsyncSession, slug: str) -> Prompt | None:
     stmt = select(Prompt).where(Prompt.slug == slug)
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
@@ -381,7 +379,7 @@ async def create_generation_task(
 
 async def get_generation_task_by_id(
     session: AsyncSession, task_id: int
-) -> Optional[GenerationTask]:
+) -> GenerationTask | None:
     stmt = select(GenerationTask).where(GenerationTask.id == task_id)
     result = await session.execute(stmt)
     return result.scalar_one_or_none()

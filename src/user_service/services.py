@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,7 +23,7 @@ from .schemas import (
 async def register_user(
     session: AsyncSession,
     user_data: UserCreate,
-    profile_data: Optional[UserProfileCreate] = None,
+    profile_data: UserProfileCreate | None = None,
 ) -> User:
     """Create a user and optional profile within a single transaction."""
 
@@ -64,13 +63,13 @@ async def open_session(session: AsyncSession, data: UserSessionCreate) -> UserSe
 
 async def revoke_session_by_token(
     session: AsyncSession, token: str
-) -> Optional[UserSession]:
+) -> UserSession | None:
     return await repository.revoke_session(session, token)
 
 
 async def expire_session_by_token(
     session: AsyncSession, token: str
-) -> Optional[UserSession]:
+) -> UserSession | None:
     return await repository.expire_session(session, token)
 
 
@@ -78,7 +77,7 @@ async def activate_subscription(
     session: AsyncSession,
     data: SubscriptionCreate,
     *,
-    reason: Optional[str] = None,
+    reason: str | None = None,
 ) -> Subscription:
     """Activate a subscription for a user and capture an audit snapshot."""
 
@@ -132,8 +131,8 @@ async def cancel_subscription(
     session: AsyncSession,
     subscription: Subscription,
     *,
-    reason: Optional[str] = None,
-    effective_at: Optional[datetime] = None,
+    reason: str | None = None,
+    effective_at: datetime | None = None,
 ) -> Subscription:
     """Mark a subscription as canceled while preserving historical context."""
 
@@ -174,7 +173,7 @@ async def record_subscription_transaction(
     payment_data: PaymentCreate,
     transaction_data: TransactionCreate,
     *,
-    reason: Optional[str] = None,
+    reason: str | None = None,
 ) -> Transaction:
     """Create a payment and ledger transaction tied to a subscription."""
 

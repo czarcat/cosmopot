@@ -2,15 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Any, Dict, List, Optional
-
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    EmailStr,
-    Field,
-    field_validator,
-    model_validator,
+from typing import Any, EmailStr, Field, field_validator, model_validator, 
 )
 
 from .enums import (
@@ -29,7 +21,7 @@ def _quantize_two_places(value: Decimal) -> Decimal:
     return value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
-def _coerce_mapping(value: Any) -> Dict[str, Any]:
+def _coerce_mapping(value: Any) -> dict[str, Any]:
     if value is None:
         return {}
     if isinstance(value, dict):
@@ -37,7 +29,7 @@ def _coerce_mapping(value: Any) -> Dict[str, Any]:
     raise ValueError("value must be a mapping")
 
 
-def _coerce_optional_mapping(value: Any) -> Optional[Dict[str, Any]]:
+def _coerce_optional_mapping(value: Any) -> dict[str, Any | None]:
     if value is None:
         return None
     if isinstance(value, dict):
@@ -45,7 +37,7 @@ def _coerce_optional_mapping(value: Any) -> Optional[Dict[str, Any]]:
     raise ValueError("value must be a mapping")
 
 
-def _validate_s3_uri(value: Optional[str]) -> Optional[str]:
+def _validate_s3_uri(value: str | None) -> str | None:
     if value is None:
         return None
     if not isinstance(value, str):
@@ -62,7 +54,7 @@ class UserCreate(BaseModel):
     hashed_password: str = Field(..., min_length=8, max_length=255)
     role: UserRole = UserRole.USER
     balance: Decimal = Decimal("0.00")
-    subscription_id: Optional[int] = None
+    subscription_id: int | None = None
     is_active: bool = True
 
     model_config = ConfigDict(use_enum_values=True)
@@ -77,21 +69,21 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    email: Optional[EmailStr] = None
-    hashed_password: Optional[str] = Field(None, min_length=8, max_length=255)
-    role: Optional[UserRole] = None
-    balance: Optional[Decimal] = None
-    subscription_id: Optional[int] = None
-    is_active: Optional[bool] = None
-    deleted_at: Optional[datetime] = None
+    email: EmailStr | None = None
+    hashed_password: str | None = Field(None, min_length=8, max_length=255)
+    role: UserRole | None = None
+    balance: Decimal | None = None
+    subscription_id: int | None = None
+    is_active: bool | None = None
+    deleted_at: datetime | None = None
 
     model_config = ConfigDict(use_enum_values=True)
 
     @field_validator("balance", mode="before")
     @classmethod
     def validate_balance(
-        cls, value: Optional[Decimal | str | int | float]
-    ) -> Optional[Decimal]:
+        cls, value: Decimal | str | int | float | None
+    ) -> Decimal | None:
         if value is None:
             return None
         return _quantize_two_places(Decimal(str(value)))
@@ -102,22 +94,22 @@ class UserRead(BaseModel):
     email: EmailStr
     role: UserRole
     balance: Decimal
-    subscription_id: Optional[int]
+    subscription_id: int | None
     is_active: bool
     created_at: datetime
     updated_at: datetime
-    deleted_at: Optional[datetime]
+    deleted_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class UserProfileBase(BaseModel):
-    first_name: Optional[str] = Field(None, max_length=120)
-    last_name: Optional[str] = Field(None, max_length=120)
-    telegram_id: Optional[int] = Field(None, ge=1)
-    phone_number: Optional[str] = Field(None, max_length=40)
-    country: Optional[str] = Field(None, max_length=80)
-    city: Optional[str] = Field(None, max_length=80)
+    first_name: str | None = Field(None, max_length=120)
+    last_name: str | None = Field(None, max_length=120)
+    telegram_id: int | None = Field(None, ge=1)
+    phone_number: str | None = Field(None, max_length=40)
+    country: str | None = Field(None, max_length=80)
+    city: str | None = Field(None, max_length=80)
 
 
 class UserProfileCreate(UserProfileBase):
@@ -133,7 +125,7 @@ class UserProfileRead(UserProfileBase):
     user_id: int
     created_at: datetime
     updated_at: datetime
-    deleted_at: Optional[datetime]
+    deleted_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -141,8 +133,8 @@ class UserProfileRead(UserProfileBase):
 class UserSessionCreate(BaseModel):
     user_id: int
     session_token: str = Field(..., min_length=16, max_length=255)
-    user_agent: Optional[str] = Field(None, max_length=255)
-    ip_address: Optional[str] = Field(None, max_length=45)
+    user_agent: str | None = Field(None, max_length=255)
+    ip_address: str | None = Field(None, max_length=45)
     expires_at: datetime
 
     @field_validator("expires_at")
@@ -161,19 +153,19 @@ class UserSessionRead(BaseModel):
     id: int
     user_id: int
     session_token: str
-    user_agent: Optional[str]
-    ip_address: Optional[str]
+    user_agent: str | None
+    ip_address: str | None
     expires_at: datetime
     created_at: datetime
-    revoked_at: Optional[datetime]
-    ended_at: Optional[datetime]
+    revoked_at: datetime | None
+    ended_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class UserWithProfile(UserRead):
-    profile: Optional[UserProfileRead] = None
-    sessions: List[UserSessionRead] = Field(default_factory=list)
+    profile: UserProfileRead | None = None
+    sessions: list[UserSessionRead] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -185,9 +177,9 @@ class SubscriptionCreate(BaseModel):
     auto_renew: bool = True
     quota_limit: int = Field(0, ge=0)
     quota_used: int = Field(0, ge=0)
-    provider_subscription_id: Optional[str] = Field(None, max_length=120)
-    provider_data: Dict[str, Any] = Field(default_factory=dict)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    provider_subscription_id: str | None = Field(None, max_length=120)
+    provider_data: dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
     current_period_start: datetime
     current_period_end: datetime
 
@@ -215,10 +207,10 @@ class SubscriptionCreate(BaseModel):
 
 class SubscriptionRenew(BaseModel):
     new_period_end: datetime
-    quota_limit: Optional[int] = Field(None, ge=0)
-    provider_data: Dict[str, Any] = Field(default_factory=dict)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    reason: Optional[str] = Field(None, max_length=255)
+    quota_limit: int | None = Field(None, ge=0)
+    provider_data: dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    reason: str | None = Field(None, max_length=255)
 
     model_config = ConfigDict(use_enum_values=True)
 
@@ -236,13 +228,13 @@ class SubscriptionRenew(BaseModel):
 
 class PaymentCreate(BaseModel):
     user_id: int
-    subscription_id: Optional[int] = None
+    subscription_id: int | None = None
     amount: Decimal
     currency: str = Field(..., min_length=3, max_length=3)
     status: PaymentStatus = PaymentStatus.COMPLETED
-    provider_payment_id: Optional[str] = Field(None, max_length=120)
-    provider_data: Dict[str, Any] = Field(default_factory=dict)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    provider_payment_id: str | None = Field(None, max_length=120)
+    provider_data: dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
     paid_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config = ConfigDict(use_enum_values=True)
@@ -275,14 +267,14 @@ class PaymentCreate(BaseModel):
 
 
 class TransactionCreate(BaseModel):
-    subscription_id: Optional[int]
+    subscription_id: int | None
     user_id: int
     amount: Decimal
     currency: str = Field(..., min_length=3, max_length=3)
     type: TransactionType = TransactionType.CHARGE
-    description: Optional[str] = Field(None, max_length=255)
-    provider_reference: Optional[str] = Field(None, max_length=120)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    description: str | None = Field(None, max_length=255)
+    provider_reference: str | None = Field(None, max_length=120)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     model_config = ConfigDict(use_enum_values=True)
 
@@ -300,21 +292,21 @@ class TransactionCreate(BaseModel):
 class PromptCreate(BaseModel):
     slug: str = Field(..., min_length=1, max_length=120)
     name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = Field(None, max_length=1024)
+    description: str | None = Field(None, max_length=1024)
     source: PromptSource = PromptSource.SYSTEM
-    parameters: Dict[str, Any] = Field(default_factory=dict)
-    preview_asset_url: Optional[str] = None
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    preview_asset_url: str | None = None
 
     model_config = ConfigDict(use_enum_values=True)
 
     @field_validator("parameters", mode="before")
     @classmethod
-    def validate_parameters(cls, value: Any) -> Dict[str, Any]:
+    def validate_parameters(cls, value: Any) -> dict[str, Any]:
         return _coerce_mapping(value)
 
     @field_validator("preview_asset_url")
     @classmethod
-    def validate_preview_url(cls, value: Optional[str]) -> Optional[str]:
+    def validate_preview_url(cls, value: str | None) -> str | None:
         return _validate_s3_uri(value)
 
 
@@ -331,31 +323,31 @@ class GenerationTaskCreate(BaseModel):
     prompt_id: int
     status: GenerationTaskStatus = GenerationTaskStatus.PENDING
     source: GenerationTaskSource = GenerationTaskSource.API
-    parameters: Dict[str, Any] = Field(default_factory=dict)
-    result_parameters: Dict[str, Any] = Field(default_factory=dict)
-    input_asset_url: Optional[str] = None
-    result_asset_url: Optional[str] = None
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    result_parameters: dict[str, Any] = Field(default_factory=dict)
+    input_asset_url: str | None = None
+    result_asset_url: str | None = None
 
     model_config = ConfigDict(use_enum_values=True)
 
     @field_validator("parameters", mode="before")
     @classmethod
-    def validate_parameters(cls, value: Any) -> Dict[str, Any]:
+    def validate_parameters(cls, value: Any) -> dict[str, Any]:
         return _coerce_mapping(value)
 
     @field_validator("result_parameters", mode="before")
     @classmethod
-    def validate_result_parameters(cls, value: Any) -> Dict[str, Any]:
+    def validate_result_parameters(cls, value: Any) -> dict[str, Any]:
         return _coerce_mapping(value)
 
     @field_validator("input_asset_url")
     @classmethod
-    def validate_input_url(cls, value: Optional[str]) -> Optional[str]:
+    def validate_input_url(cls, value: str | None) -> str | None:
         return _validate_s3_uri(value)
 
     @field_validator("result_asset_url")
     @classmethod
-    def validate_result_url(cls, value: Optional[str]) -> Optional[str]:
+    def validate_result_url(cls, value: str | None) -> str | None:
         return _validate_s3_uri(value)
 
 
@@ -365,14 +357,14 @@ class GenerationTaskRead(BaseModel):
     prompt_id: int
     status: GenerationTaskStatus
     source: GenerationTaskSource
-    parameters: Dict[str, Any]
-    result_parameters: Dict[str, Any]
-    input_asset_url: Optional[str]
-    result_asset_url: Optional[str]
-    error: Optional[str]
-    queued_at: Optional[datetime]
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
+    parameters: dict[str, Any]
+    result_parameters: dict[str, Any]
+    input_asset_url: str | None
+    result_asset_url: str | None
+    error: str | None
+    queued_at: datetime | None
+    started_at: datetime | None
+    completed_at: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -380,31 +372,31 @@ class GenerationTaskRead(BaseModel):
 
 
 class GenerationTaskResultUpdate(BaseModel):
-    result_asset_url: Optional[str] = None
-    result_parameters: Optional[Dict[str, Any]] = None
+    result_asset_url: str | None = None
+    result_parameters: dict[str, Any | None] = None
 
     @field_validator("result_asset_url")
     @classmethod
-    def validate_result_url(cls, value: Optional[str]) -> Optional[str]:
+    def validate_result_url(cls, value: str | None) -> str | None:
         return _validate_s3_uri(value)
 
     @field_validator("result_parameters", mode="before")
     @classmethod
-    def validate_result_parameters(cls, value: Any) -> Optional[Dict[str, Any]]:
+    def validate_result_parameters(cls, value: Any) -> dict[str, Any | None]:
         return _coerce_optional_mapping(value)
 
 
 class GenerationTaskFailureUpdate(BaseModel):
     error: str = Field(..., min_length=1, max_length=500)
-    result_asset_url: Optional[str] = None
-    result_parameters: Optional[Dict[str, Any]] = None
+    result_asset_url: str | None = None
+    result_parameters: dict[str, Any | None] = None
 
     @field_validator("result_asset_url")
     @classmethod
-    def validate_result_url(cls, value: Optional[str]) -> Optional[str]:
+    def validate_result_url(cls, value: str | None) -> str | None:
         return _validate_s3_uri(value)
 
     @field_validator("result_parameters", mode="before")
     @classmethod
-    def validate_result_parameters(cls, value: Any) -> Optional[Dict[str, Any]]:
+    def validate_result_parameters(cls, value: Any) -> dict[str, Any | None]:
         return _coerce_optional_mapping(value)
