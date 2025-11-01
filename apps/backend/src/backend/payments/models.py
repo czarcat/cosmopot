@@ -44,8 +44,8 @@ class Payment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="RUB")
     confirmation_url: Mapped[str | None] = mapped_column(String(2048))
     description: Mapped[str | None] = mapped_column(String(255))
-    metadata: Mapped[dict[str, Any]] = mapped_column(
-        JSONType(), default_factory=dict, nullable=False
+    meta_data: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONType(), default=dict, nullable=False
     )
     captured_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     canceled_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
@@ -56,6 +56,18 @@ class Payment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+
+
+# Add backward-compatible property after class definition
+def _get_payment_metadata(self: Payment) -> dict[str, Any]:
+    return self.meta_data
+
+
+def _set_payment_metadata(self: Payment, value: dict[str, Any]) -> None:
+    self.meta_data = value
+
+
+Payment.metadata = property(_get_payment_metadata, _set_payment_metadata)
 
 
 class PaymentEvent(UUIDPrimaryKeyMixin, TimestampMixin, JSONDataMixin, Base):
