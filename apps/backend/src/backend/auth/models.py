@@ -35,12 +35,12 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    sessions: Mapped[list["UserSession"]] = relationship(
+    sessions: Mapped[list[UserSession]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    verification_tokens: Mapped[list["VerificationToken"]] = relationship(
+    verification_tokens: Mapped[list[VerificationToken]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,

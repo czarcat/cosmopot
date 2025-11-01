@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-
 import asyncio
 import json
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Awaitable
+from typing import Any
 from uuid import UUID
 
 import aio_pika

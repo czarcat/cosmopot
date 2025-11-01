@@ -60,7 +60,7 @@ class SubscriptionPlan(Base):
         onupdate=func.now(),
     )
 
-    users: Mapped[list["User"]] = relationship(
+    users: Mapped[list[User]] = relationship(
         back_populates="subscription_plan", passive_deletes=True
     )
 
@@ -102,28 +102,28 @@ class User(Base):
         DateTime(timezone=True), nullable=True
     )
 
-    profile: Mapped["UserProfile"] = relationship(
+    profile: Mapped[UserProfile] = relationship(
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    sessions: Mapped[list["UserSession"]] = relationship(
+    sessions: Mapped[list[UserSession]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
     subscription_plan: Mapped[SubscriptionPlan | None] = relationship(
         back_populates="users"
     )
-    subscriptions: Mapped[list["Subscription"]] = relationship(
+    subscriptions: Mapped[list[Subscription]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
-    payments: Mapped[list["Payment"]] = relationship(
+    payments: Mapped[list[Payment]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
-    transactions: Mapped[list["Transaction"]] = relationship(
+    transactions: Mapped[list[Transaction]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
-    generation_tasks: Mapped[list["GenerationTask"]] = relationship(
+    generation_tasks: Mapped[list[GenerationTask]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
 
@@ -272,17 +272,17 @@ class Subscription(Base):
     )
 
     user: Mapped[User] = relationship(back_populates="subscriptions")
-    history: Mapped[list["SubscriptionHistory"]] = relationship(
+    history: Mapped[list[SubscriptionHistory]] = relationship(
         back_populates="subscription",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    payments: Mapped[list["Payment"]] = relationship(
+    payments: Mapped[list[Payment]] = relationship(
         back_populates="subscription",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    transactions: Mapped[list["Transaction"]] = relationship(
+    transactions: Mapped[list[Transaction]] = relationship(
         back_populates="subscription",
         cascade="all, delete-orphan",
         passive_deletes=True,
@@ -413,7 +413,7 @@ class Payment(Base):
 
     subscription: Mapped[Subscription | None] = relationship(back_populates="payments")
     user: Mapped[User] = relationship(back_populates="payments")
-    transactions: Mapped[list["Transaction"]] = relationship(
+    transactions: Mapped[list[Transaction]] = relationship(
         back_populates="payment", cascade="all, delete-orphan", passive_deletes=True
     )
 
@@ -534,7 +534,7 @@ class Prompt(Base):
         onupdate=func.now(),
     )
 
-    tasks: Mapped[list["GenerationTask"]] = relationship(
+    tasks: Mapped[list[GenerationTask]] = relationship(
         back_populates="prompt",
         passive_deletes=True,
     )

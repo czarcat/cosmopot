@@ -205,7 +205,7 @@ class SubscriptionCreate(BaseModel):
         return candidate.astimezone(UTC)
 
     @model_validator(mode="after")
-    def validate_period(self) -> "SubscriptionCreate":
+    def validate_period(self) -> SubscriptionCreate:
         if self.current_period_end <= self.current_period_start:
             raise ValueError("current_period_end must be after current_period_start")
         if self.quota_used > self.quota_limit:

@@ -47,7 +47,7 @@ class GeminiNanoClient:
         self._client = httpx.Client(base_url=base_url, timeout=timeout)
 
     @classmethod
-    def from_settings(cls, settings: WorkerSettings) -> "GeminiNanoClient":
+    def from_settings(cls, settings: WorkerSettings) -> GeminiNanoClient:
         return cls(
             base_url=settings.banana_api_url,
             api_key=settings.banana_api_key,

@@ -31,7 +31,7 @@ class RedisNotifier:
         self._log = get_logger(__name__)
 
     @classmethod
-    def from_settings(cls, settings: WorkerSettings) -> "RedisNotifier":
+    def from_settings(cls, settings: WorkerSettings) -> RedisNotifier:
         return cls(
             settings.redis_pubsub_url,
             status_channel=settings.redis_status_channel,

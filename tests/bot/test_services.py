@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
-
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 from unittest.mock import AsyncMock, Mock
@@ -26,13 +25,13 @@ class _WebSocketStub:
     def __init__(self, messages: Iterable[str]) -> None:
         self._messages = list(messages)
 
-    async def __aenter__(self) -> "_WebSocketStub":
+    async def __aenter__(self) -> _WebSocketStub:
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> bool:
         return False
 
-    def __aiter__(self) -> "_WebSocketStub":
+    def __aiter__(self) -> _WebSocketStub:
         return self
 
     async def __anext__(self) -> str:
