@@ -7,6 +7,7 @@ from secrets import token_hex
 from typing import Any
 
 from user_service.enums import (
+    GenerationTaskSource,
     GenerationTaskStatus,
     PaymentStatus,
     PromptSource,
