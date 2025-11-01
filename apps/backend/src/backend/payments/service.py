@@ -9,7 +9,7 @@ from decimal import Decimal
 from typing import Any
 
 import structlog
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import PaymentPlan, Settings
@@ -24,7 +24,7 @@ from backend.payments.exceptions import (
 from backend.payments.gateway import PaymentGateway
 from backend.payments.models import Payment, PaymentEvent
 from backend.payments.notifications import LoggingPaymentNotifier, PaymentNotifier
-from user_service.models import Subscription, User
+from user_service.models import SubscriptionPlan, User
 
 
 @dataclass(slots=True)
@@ -56,10 +56,13 @@ class PaymentService:
         self, session: AsyncSession, user: User, request: PaymentRequest
     ) -> Payment:
         plan = self._resolve_plan(request.plan_code)
-        subscription = await self._get_subscription(session, plan.subscription_level)
+        subscription_plan = await self._get_subscription_plan(
+            session, plan.subscription_level
+        )
 
         currency = plan.currency or self._settings.payments.default_currency
-        amount = plan.amount.quantize(Decimal("0.01"))
+        amount = Decimal(subscription_plan.monthly_cost).quantize(Decimal("0.01"))
+        description = plan.description or f"{subscription_plan.name} subscription"
 
         idempotency_key = request.idempotency_key or self._generate_idempotency_key(
             user.id
@@ -78,7 +81,7 @@ class PaymentService:
             amount=amount,
             currency=currency,
             plan_code=plan.code,
-            description=plan.description,
+            description=description,
             user=user,
             success_url=request.success_url,
             cancel_url=request.cancel_url,
@@ -96,7 +99,7 @@ class PaymentService:
 
         payment = Payment(
             user_id=user.id,
-            subscription_id=subscription.id,
+            subscription_id=subscription_plan.id,
             provider_payment_id=provider_payment_id,
             idempotency_key=idempotency_key,
             status=status,
@@ -107,6 +110,8 @@ class PaymentService:
             metadata=self._build_metadata(
                 plan_code=plan.code,
                 plan_level=plan.subscription_level,
+                plan_name=subscription_plan.name,
+                plan_id=subscription_plan.id,
                 success_url=request.success_url,
                 cancel_url=request.cancel_url,
                 provider_payload=provider_payload,
@@ -282,17 +287,20 @@ class PaymentService:
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def _get_subscription(
+    async def _get_subscription_plan(
         self, session: AsyncSession, level: str
-    ) -> Subscription:
-        stmt = select(Subscription).where(Subscription.level == level)
+    ) -> SubscriptionPlan:
+        normalised_level = level.strip().lower()
+        stmt = select(SubscriptionPlan).where(
+            func.lower(SubscriptionPlan.level) == normalised_level
+        )
         result = await session.execute(stmt)
-        subscription = result.scalar_one_or_none()
-        if subscription is None:
+        subscription_plan = result.scalar_one_or_none()
+        if subscription_plan is None:
             raise PaymentPlanNotFoundError(
-                f"Subscription level '{level}' is not configured in the database"
+                f"Subscription plan with level '{level}' is not configured in the database"
             )
-        return subscription
+        return subscription_plan
 
     async def _find_payment(
         self, session: AsyncSession, user_id: int, idempotency_key: str
@@ -349,6 +357,8 @@ class PaymentService:
         *,
         plan_code: str,
         plan_level: str,
+        plan_name: str,
+        plan_id: int,
         success_url: str,
         cancel_url: str | None,
         provider_payload: dict[str, Any],
@@ -357,6 +367,8 @@ class PaymentService:
         return {
             "plan_code": plan_code,
             "plan_level": plan_level,
+            "plan_name": plan_name,
+            "plan_id": plan_id,
             "success_url": success_url,
             "cancel_url": cancel_url,
             "provider_payload": provider_payload,
