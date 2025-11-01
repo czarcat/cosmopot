@@ -26,9 +26,7 @@ class GUID(TypeDecorator[uuid.UUID]):
             return cast(TypeEngine[Any], dialect.type_descriptor(PG_UUID(as_uuid=True)))
         return cast(TypeEngine[Any], dialect.type_descriptor(CHAR(36)))
 
-    def process_bind_param(
-        self, value: uuid.UUID | None, dialect: Dialect
-    ) -> Any:
+    def process_bind_param(self, value: uuid.UUID | None, dialect: Dialect) -> Any:
         if value is None:
             return value
         if isinstance(value, uuid.UUID):
@@ -52,18 +50,14 @@ class JSONType(TypeDecorator[JSONValue]):
     impl = JSONB
     cache_ok = True
 
-    def process_bind_param(
-        self, value: JSONValue | None, dialect: Dialect
-    ) -> Any:
+    def process_bind_param(self, value: JSONValue | None, dialect: Dialect) -> Any:
         if value is None:
             return value
         if isinstance(value, (dict, list)):
             return cast(JSONValue, json.loads(json.dumps(value)))
         raise TypeError("JSONType values must be dicts or lists")
 
-    def process_result_value(
-        self, value: Any, dialect: Dialect
-    ) -> JSONValue | None:
+    def process_result_value(self, value: Any, dialect: Dialect) -> JSONValue | None:
         if value is None:
             return value
         if isinstance(value, (dict, list)):

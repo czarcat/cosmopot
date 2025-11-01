@@ -60,10 +60,7 @@ class MetadataAliasMixin:
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         metadata_value = kwargs.pop("metadata", self._metadata_marker)
-        if (
-            metadata_value is not self._metadata_marker
-            and "meta_data" not in kwargs
-        ):
+        if metadata_value is not self._metadata_marker and "meta_data" not in kwargs:
             kwargs["meta_data"] = metadata_value
         super().__init__(*args, **kwargs)
 
