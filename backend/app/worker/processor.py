@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import asyncio
 import base64
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import io
-from typing import Tuple
 
 from PIL import Image
 
@@ -13,7 +12,7 @@ class ImageProcessingError(RuntimeError):
 def generate_thumbnail(
     image_bytes: bytes,
     *,
-    size: Tuple[int, int] = (320, 320),
+    size: tuple[int, int] = (320, 320),
     image_format: str = "JPEG",
 ) -> bytes:
     """Generate a thumbnail for the provided image bytes."""

@@ -2,17 +2,8 @@ from __future__ import annotations
 
 import datetime as dt
 import uuid
-from typing import List
 
-from sqlalchemy import (
-    Boolean,
-    DateTime,
-    Enum,
-    ForeignKey,
-    Index,
-    String,
-    UniqueConstraint,
-)
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.auth.enums import UserRole
@@ -36,12 +27,12 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    sessions: Mapped[List["UserSession"]] = relationship(
+    sessions: Mapped[list["UserSession"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    verification_tokens: Mapped[List["VerificationToken"]] = relationship(
+    verification_tokens: Mapped[list["VerificationToken"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,

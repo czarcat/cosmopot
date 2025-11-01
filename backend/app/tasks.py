@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 import time
-from typing import Any, Dict
+from typing import Any
 
 from celery import states
 
@@ -34,11 +34,11 @@ def unreliable_task() -> str:
 
 
 @celery_app.task(name="app.tasks.process_generation_task", bind=True)
-def process_generation_task(self, task_id: int) -> Dict[str, Any]:
+def process_generation_task(self, task_id: int) -> dict[str, Any]:
     runtime = bootstrap.get_runtime()
     processor = GenerationTaskProcessor(task_id, runtime)
     outcome = processor.run()
-    result: Dict[str, Any] = dict(outcome.details)
+    result: dict[str, Any] = dict(outcome.details)
     result["status"] = outcome.status
     if outcome.status == "failed":
         logger.warning("generation-task-failed", task_id=task_id, details=result)

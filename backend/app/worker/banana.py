@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import base64
 import time
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 import httpx
 

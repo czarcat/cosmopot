@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
+
 
 from aiogram import Bot
 from aiogram.types import BotCommand

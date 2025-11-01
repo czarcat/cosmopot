@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -16,7 +15,7 @@ _ENGINE: AsyncEngine | None = None
 _SESSION_FACTORY: async_sessionmaker[AsyncSession] | None = None
 
 
-def get_engine(settings: Optional[Settings] = None) -> AsyncEngine:
+def get_engine(settings: Settings | None = None) -> AsyncEngine:
     global _ENGINE
     if _ENGINE is None:
         settings = settings or get_settings()
@@ -29,7 +28,7 @@ def get_engine(settings: Optional[Settings] = None) -> AsyncEngine:
 
 
 def get_session_factory(
-    settings: Optional[Settings] = None,
+    settings: Settings | None = None,
 ) -> async_sessionmaker[AsyncSession]:
     global _SESSION_FACTORY
     if _SESSION_FACTORY is None:

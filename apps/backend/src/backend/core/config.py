@@ -265,14 +265,14 @@ class PaymentPlan(BaseModel):
     description: str | None = None
 
     @model_validator(mode="after")
-    def _normalise(self) -> "PaymentPlan":
+    def _normalise(self) -> PaymentPlan:
         self.code = self.code.strip().lower()
         self.subscription_level = self.subscription_level.strip().lower()
         self.currency = self.currency.upper()
         return self
 
 
-def _default_payment_plans() -> dict[str, "PaymentPlan"]:
+def _default_payment_plans() -> dict[str, PaymentPlan]:
     return {
         "basic": PaymentPlan(
             code="basic",
@@ -307,7 +307,7 @@ class PaymentsSettings(BaseModel):
     plans: dict[str, PaymentPlan] = Field(default_factory=_default_payment_plans)
 
     @model_validator(mode="after")
-    def _normalise(self) -> "PaymentsSettings":
+    def _normalise(self) -> PaymentsSettings:
         self.default_currency = self.default_currency.upper()
         normalised: dict[str, PaymentPlan] = {}
         for key, plan in self.plans.items():
@@ -460,7 +460,7 @@ class Settings(BaseSettings):
     )
 
     @model_validator(mode="after")
-    def _normalize(self) -> "Settings":
+    def _normalize(self) -> Settings:
         self.log_level = self.log_level.upper()
 
         if self.environment in {Environment.DEVELOPMENT, Environment.TEST}:
