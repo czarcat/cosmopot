@@ -43,7 +43,7 @@ class GenerationTask(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     error_message: Mapped[str | None] = mapped_column(String(512))
 
-    events: Mapped[list["GenerationTaskEvent"]] = relationship(
+    events: Mapped[list[GenerationTaskEvent]] = relationship(
         back_populates="task",
         cascade="all, delete-orphan",
         passive_deletes=True,

@@ -48,7 +48,7 @@ class MinioStorage(StorageClient):
         self._client = client
 
     @classmethod
-    def from_settings(cls, settings: WorkerSettings) -> "MinioStorage":
+    def from_settings(cls, settings: WorkerSettings) -> MinioStorage:
         if not settings.s3_endpoint:
             raise StorageError("S3 endpoint is not configured")
         from minio import Minio  # type: ignore[import-untyped]

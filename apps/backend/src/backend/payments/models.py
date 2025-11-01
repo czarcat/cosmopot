@@ -51,7 +51,7 @@ class Payment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     canceled_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     failure_reason: Mapped[str | None] = mapped_column(String(255))
 
-    events: Mapped[list["PaymentEvent"]] = relationship(
+    events: Mapped[list[PaymentEvent]] = relationship(
         back_populates="payment",
         cascade="all, delete-orphan",
         passive_deletes=True,
