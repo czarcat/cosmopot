@@ -10,8 +10,8 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from user_service.enums import UserRole
-from user_service.models import Subscription, User, UserProfile, UserSession
+from user_service.enums import SubscriptionTier, UserRole
+from user_service.models import Subscription, SubscriptionPlan, User, UserProfile, UserSession
 
 
 async def _persist(session: AsyncSession, instance: Any) -> Any:
@@ -21,16 +21,16 @@ async def _persist(session: AsyncSession, instance: Any) -> Any:
     return instance
 
 
-async def create_subscription(
+async def create_subscription_plan(
     session_factory: async_sessionmaker[AsyncSession],
     *,
     name: str = "Pro",
     level: str = "premium",
     monthly_cost: Decimal = Decimal("19.99"),
-) -> Subscription:
+) -> SubscriptionPlan:
     async with session_factory() as session:
-        subscription = Subscription(name=name, level=level, monthly_cost=monthly_cost)
-        return await _persist(session, subscription)
+        plan = SubscriptionPlan(name=name, level=level, monthly_cost=monthly_cost)
+        return await _persist(session, plan)
 
 
 async def create_user(
@@ -39,7 +39,7 @@ async def create_user(
     role: UserRole = UserRole.USER,
     balance: Decimal = Decimal("0.00"),
     is_active: bool = True,
-    subscription: Subscription | None = None,
+    subscription_plan: SubscriptionPlan | None = None,
 ) -> User:
     async with session_factory() as session:
         user = User(
@@ -49,9 +49,24 @@ async def create_user(
             balance=balance,
             is_active=is_active,
         )
-        if subscription is not None:
-            user.subscription_id = subscription.id
+        if subscription_plan is not None:
+            user.subscription_id = subscription_plan.id
         return await _persist(session, user)
+
+
+async def create_active_subscription(
+    session_factory: async_sessionmaker[AsyncSession],
+    user: User,
+    *,
+    tier: SubscriptionTier = SubscriptionTier.PRO,
+) -> Subscription:
+    async with session_factory() as session:
+        subscription = Subscription(
+            user_id=user.id,
+            tier=tier,
+            current_period_end=datetime.now(UTC) + timedelta(days=30),
+        )
+        return await _persist(session, subscription)
 
 
 async def create_profile(
@@ -104,11 +119,11 @@ def auth_headers(user: User) -> dict[str, str]:
 async def test_get_current_user_profile(
     async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
 ) -> None:
-    subscription = await create_subscription(
+    subscription_plan = await create_subscription_plan(
         session_factory, name="Enterprise", level="enterprise"
     )
     user = await create_user(
-        session_factory, balance=Decimal("42.50"), subscription=subscription
+        session_factory, balance=Decimal("42.50"), subscription_plan=subscription_plan
     )
     await create_profile(session_factory, user, first_name="Eve")
     await create_session(session_factory, user)
@@ -119,7 +134,7 @@ async def test_get_current_user_profile(
     payload = response.json()
     assert payload["email"] == user.email
     assert payload["profile"]["first_name"] == "Eve"
-    assert payload["subscription"]["name"] == subscription.name
+    assert payload["subscription"]["name"] == subscription_plan.name
     assert payload["quotas"]["plan"].lower().startswith("enterprise")
     assert payload["sessions"][0]["status"] == "active"
 
@@ -430,3 +445,61 @@ async def test_me_requires_valid_active_user(
         headers=auth_headers(inactive),
     )
     assert inactive_response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_get_user_without_subscription_plan(
+    async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    user = await create_user(session_factory, balance=Decimal("10.00"))
+
+    response = await async_client.get("/api/v1/users/me", headers=auth_headers(user))
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["email"] == user.email
+    assert payload["subscription"] is None
+    assert payload["quotas"]["plan"] == "Free"
+    assert payload["quotas"]["monthly_allocation"] == 500
+
+
+@pytest.mark.asyncio
+async def test_get_balance_with_subscription_plan(
+    async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    subscription_plan = await create_subscription_plan(
+        session_factory, name="Basic", level="basic", monthly_cost=Decimal("9.99")
+    )
+    user = await create_user(
+        session_factory, balance=Decimal("5.00"), subscription_plan=subscription_plan
+    )
+
+    response = await async_client.get(
+        "/api/v1/users/me/balance", headers=auth_headers(user)
+    )
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert Decimal(str(payload["balance"])) == Decimal("5.00")
+    assert payload["quotas"]["plan"] == "Basic"
+    assert payload["quotas"]["monthly_allocation"] == 2_000
+
+
+@pytest.mark.asyncio
+async def test_get_user_with_active_subscription_fallback(
+    async_client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    user = await create_user(session_factory, balance=Decimal("20.00"))
+    await create_active_subscription(
+        session_factory, user, tier=SubscriptionTier.PRO
+    )
+
+    response = await async_client.get("/api/v1/users/me", headers=auth_headers(user))
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["email"] == user.email
+    assert payload["subscription"] is not None
+    assert payload["subscription"]["name"] == "Pro"
+    assert payload["subscription"]["level"] == "pro"
+    assert payload["quotas"]["plan"] == "Pro"
