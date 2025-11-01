@@ -87,3 +87,5 @@ The project is configured for GitHub Actions CI with the following checks:
 - Unit tests with coverage (>80% required)
 
 All frontend CI jobs use pnpm 8.15.8 with frozen lockfile to ensure dependency consistency.
+
+**Note**: The CI coverage check requires `coverage/coverage-summary.json` to be generated. This is configured via the `json-summary` reporter in `vitest.config.ts`.
