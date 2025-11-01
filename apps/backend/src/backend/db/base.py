@@ -53,7 +53,8 @@ class JSONDataMixin:
 
 
 class MetadataAliasMixin:
-    """Provide instance-level access to JSON metadata without shadowing Base.metadata."""
+    """Provide instance-level access to JSON metadata without shadowing
+    Base.metadata."""
 
     _metadata_marker = object()
 

@@ -67,8 +67,8 @@ async def healthcheck() -> bool:
     return True
 
 
-async def wait_for_database(timeout: float = 30.0) -> None:
-    deadline = asyncio.get_event_loop().time() + timeout
+async def wait_for_database(timeout_seconds: float = 30.0) -> None:
+    deadline = asyncio.get_event_loop().time() + timeout_seconds
     while True:
         try:
             await init_pool()
