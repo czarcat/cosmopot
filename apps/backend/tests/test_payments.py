@@ -20,7 +20,7 @@ from backend.payments.dependencies import (
 from backend.payments.enums import PaymentStatus
 from backend.payments.models import Payment
 from backend.payments.service import PaymentService
-from user_service.models import Subscription, User
+from user_service.models import SubscriptionPlan, User
 
 
 @dataclass(slots=True)
@@ -78,30 +78,30 @@ async def _persist(
         return instance
 
 
-async def create_subscription(
+async def create_subscription_plan(
     session_factory: async_sessionmaker[AsyncSession],
     *,
     name: str = "Basic",
     level: str = "basic",
     monthly_cost: Decimal = Decimal("9.99"),
-) -> Subscription:
-    subscription = Subscription(name=name, level=level, monthly_cost=monthly_cost)
-    return await _persist(session_factory, subscription)
+) -> SubscriptionPlan:
+    plan = SubscriptionPlan(name=name, level=level, monthly_cost=monthly_cost)
+    return await _persist(session_factory, plan)
 
 
 async def create_user(
     session_factory: async_sessionmaker[AsyncSession],
     *,
     balance: Decimal = Decimal("0.00"),
-    subscription: Subscription | None = None,
+    subscription_plan: SubscriptionPlan | None = None,
 ) -> User:
     user = User(
         email=f"user-{uuid4().hex}@example.com",
         hashed_password="hashed",
         balance=balance,
     )
-    if subscription is not None:
-        user.subscription_id = subscription.id
+    if subscription_plan is not None:
+        user.subscription_id = subscription_plan.id
     return await _persist(session_factory, user)
 
 
@@ -136,7 +136,7 @@ async def test_create_payment_persists_record(
     payment_dependencies,
 ) -> None:
     gateway, notifier, _service = payment_dependencies
-    subscription = await create_subscription(session_factory)
+    subscription_plan = await create_subscription_plan(session_factory)
     user = await create_user(session_factory)
 
     response = await async_client.post(
@@ -157,7 +157,7 @@ async def test_create_payment_persists_record(
         db_payment = await session.get(Payment, payload["id"])
         assert db_payment is not None
         assert db_payment.user_id == user.id
-        assert db_payment.subscription_id == subscription.id
+        assert db_payment.subscription_id == subscription_plan.id
         assert db_payment.status is PaymentStatus.PENDING
         assert db_payment.metadata["plan_code"] == "basic"
 
@@ -175,7 +175,7 @@ async def test_create_payment_respects_idempotency_key(
     payment_dependencies,
 ) -> None:
     gateway, _notifier, _service = payment_dependencies
-    await create_subscription(session_factory)
+    await create_subscription_plan(session_factory)
     user = await create_user(session_factory)
 
     idempotency_key = "test-idempotency-12345"
@@ -205,7 +205,7 @@ async def test_webhook_success_updates_subscription_and_balance(
     payment_dependencies,
 ) -> None:
     gateway, notifier, service = payment_dependencies
-    subscription = await create_subscription(session_factory)
+    subscription_plan = await create_subscription_plan(session_factory)
     user = await create_user(session_factory)
 
     # Initiate payment to create record in DB
@@ -245,7 +245,7 @@ async def test_webhook_success_updates_subscription_and_balance(
 
         refreshed_user = await session.get(User, user.id)
         assert refreshed_user is not None
-        assert refreshed_user.subscription_id == subscription.id
+        assert refreshed_user.subscription_id == subscription_plan.id
         assert refreshed_user.balance == Decimal("9.99")
 
     assert notifier.notifications
@@ -260,7 +260,7 @@ async def test_webhook_failure_marks_payment(
     payment_dependencies,
 ) -> None:
     gateway, notifier, _service = payment_dependencies
-    await create_subscription(session_factory)
+    await create_subscription_plan(session_factory)
     user = await create_user(session_factory)
 
     await async_client.post(
