@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, TypeAlias
 
 from sqlalchemy import (
     BigInteger,
@@ -33,6 +33,9 @@ from .enums import (
     TransactionType,
     UserRole,
 )
+
+# Type alias for JSON dictionary columns
+JSONDict: TypeAlias = dict[str, Any]
 
 
 class Base(DeclarativeBase):
@@ -248,10 +251,10 @@ class Subscription(Base):
         Integer, nullable=False, default=0, server_default=text("0")
     )
     provider_subscription_id: Mapped[str | None] = mapped_column(String(120))
-    provider_data: Mapped[dict] = mapped_column(
+    provider_data: Mapped[JSONDict] = mapped_column(
         JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
-    meta_data: Mapped[dict] = mapped_column(
+    meta_data: Mapped[JSONDict] = mapped_column(
         "metadata", JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
     current_period_start: Mapped[datetime] = mapped_column(
@@ -288,6 +291,14 @@ class Subscription(Base):
         passive_deletes=True,
     )
 
+    @property
+    def metadata(self) -> JSONDict:
+        return self.meta_data
+
+    @metadata.setter
+    def metadata(self, value: JSONDict) -> None:
+        self.meta_data = value
+
 
 Index("ix_subscriptions_user_status", Subscription.user_id, Subscription.status)
 Index(
@@ -297,18 +308,6 @@ Index(
     sqlite_where=text("status IN ('active', 'trialing')"),
     postgresql_where=text("status IN ('active', 'trialing')"),
 )
-
-
-# Add backward-compatible property for Subscription.metadata
-def _get_subscription_metadata(self) -> dict:
-    return self.meta_data
-
-
-def _set_subscription_metadata(self, value: dict) -> None:
-    self.meta_data = value
-
-
-Subscription.metadata = property(_get_subscription_metadata, _set_subscription_metadata)
 
 
 class SubscriptionHistory(Base):
@@ -340,10 +339,10 @@ class SubscriptionHistory(Base):
     quota_limit: Mapped[int] = mapped_column(Integer, nullable=False)
     quota_used: Mapped[int] = mapped_column(Integer, nullable=False)
     provider_subscription_id: Mapped[str | None] = mapped_column(String(120))
-    provider_data: Mapped[dict] = mapped_column(
+    provider_data: Mapped[JSONDict] = mapped_column(
         JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
-    meta_data: Mapped[dict] = mapped_column(
+    meta_data: Mapped[JSONDict] = mapped_column(
         "metadata", JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
     current_period_start: Mapped[datetime] = mapped_column(
@@ -355,25 +354,18 @@ class SubscriptionHistory(Base):
 
     subscription: Mapped[Subscription] = relationship(back_populates="history")
 
+    @property
+    def metadata(self) -> JSONDict:
+        return self.meta_data
+
+    @metadata.setter
+    def metadata(self, value: JSONDict) -> None:
+        self.meta_data = value
+
 
 Index(
     "ix_subscription_history_subscription_id",
     SubscriptionHistory.subscription_id,
-)
-
-
-# Add backward-compatible property for SubscriptionHistory.metadata
-def _get_subscription_history_metadata(self) -> dict:
-    return self.meta_data
-
-
-def _set_subscription_history_metadata(self, value: dict) -> None:
-    self.meta_data = value
-
-
-SubscriptionHistory.metadata = property(
-    _get_subscription_history_metadata,
-    _set_subscription_history_metadata,
 )
 
 
@@ -398,10 +390,10 @@ class Payment(Base):
         server_default=text("'completed'"),
     )
     provider_payment_id: Mapped[str | None] = mapped_column(String(120))
-    provider_data: Mapped[dict] = mapped_column(
+    provider_data: Mapped[JSONDict] = mapped_column(
         JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
-    meta_data: Mapped[dict] = mapped_column(
+    meta_data: Mapped[JSONDict] = mapped_column(
         "metadata", JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
     paid_at: Mapped[datetime] = mapped_column(
@@ -417,6 +409,14 @@ class Payment(Base):
         back_populates="payment", cascade="all, delete-orphan", passive_deletes=True
     )
 
+    @property
+    def metadata(self) -> JSONDict:
+        return self.meta_data
+
+    @metadata.setter
+    def metadata(self, value: JSONDict) -> None:
+        self.meta_data = value
+
 
 Index("ix_payments_user_id", Payment.user_id)
 Index("ix_payments_subscription_id", Payment.subscription_id)
@@ -428,18 +428,6 @@ Index(
     sqlite_where=text("provider_payment_id IS NOT NULL"),
     postgresql_where=text("provider_payment_id IS NOT NULL"),
 )
-
-
-# Add backward-compatible property for Payment.metadata
-def _get_payment_metadata(self) -> dict:
-    return self.meta_data
-
-
-def _set_payment_metadata(self, value: dict) -> None:
-    self.meta_data = value
-
-
-Payment.metadata = property(_get_payment_metadata, _set_payment_metadata)
 
 
 class Transaction(Base):
@@ -465,7 +453,7 @@ class Transaction(Base):
     )
     description: Mapped[str | None] = mapped_column(String(255))
     provider_reference: Mapped[str | None] = mapped_column(String(120))
-    meta_data: Mapped[dict] = mapped_column(
+    meta_data: Mapped[JSONDict] = mapped_column(
         "metadata", JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -477,6 +465,14 @@ class Transaction(Base):
         back_populates="transactions"
     )
     user: Mapped[User] = relationship(back_populates="transactions")
+
+    @property
+    def metadata(self) -> JSONDict:
+        return self.meta_data
+
+    @metadata.setter
+    def metadata(self, value: JSONDict) -> None:
+        self.meta_data = value
 
 
 Index("ix_transactions_payment_id", Transaction.payment_id)
@@ -490,18 +486,6 @@ Index(
     sqlite_where=text("provider_reference IS NOT NULL"),
     postgresql_where=text("provider_reference IS NOT NULL"),
 )
-
-
-# Add backward-compatible property for Transaction.metadata
-def _get_transaction_metadata(self) -> dict:
-    return self.meta_data
-
-
-def _set_transaction_metadata(self, value: dict) -> None:
-    self.meta_data = value
-
-
-Transaction.metadata = property(_get_transaction_metadata, _set_transaction_metadata)
 
 
 class Prompt(Base):
@@ -520,7 +504,7 @@ class Prompt(Base):
         default=PromptSource.SYSTEM,
         server_default=text("'system'"),
     )
-    parameters: Mapped[dict[str, Any]] = mapped_column(
+    parameters: Mapped[JSONDict] = mapped_column(
         JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
     preview_asset_url: Mapped[str | None] = mapped_column(String(2048))
@@ -564,10 +548,10 @@ class GenerationTask(Base):
         default=GenerationTaskSource.API,
         server_default=text("'api'"),
     )
-    parameters: Mapped[dict[str, Any]] = mapped_column(
+    parameters: Mapped[JSONDict] = mapped_column(
         JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
-    result_parameters: Mapped[dict[str, Any]] = mapped_column(
+    result_parameters: Mapped[JSONDict] = mapped_column(
         JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
     input_asset_url: Mapped[str | None] = mapped_column(String(2048))
