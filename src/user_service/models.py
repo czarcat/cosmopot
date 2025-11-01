@@ -42,6 +42,36 @@ class Base(DeclarativeBase):
     """Base class for declarative models."""
 
 
+class MetadataAliasMixin:
+    """Provide instance-level access to JSON metadata without shadowing Base.metadata."""
+
+    _metadata_marker = object()
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        metadata_value = kwargs.pop("metadata", self._metadata_marker)
+        if (
+            metadata_value is not self._metadata_marker
+            and "meta_data" not in kwargs
+        ):
+            kwargs["meta_data"] = metadata_value
+        super().__init__(*args, **kwargs)
+
+    def __getattribute__(self, name: str) -> Any:
+        if name == "metadata":
+            return super().__getattribute__("meta_data")
+        return super().__getattribute__(name)
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        if key == "metadata":
+            key = "meta_data"
+        super().__setattr__(key, value)
+
+    def __delattr__(self, name: str) -> None:
+        if name == "metadata":
+            name = "meta_data"
+        super().__delattr__(name)
+
+
 class SubscriptionPlan(Base):
     """Represents an available subscription plan template."""
 
@@ -209,7 +239,7 @@ class UserSession(Base):
 Index("ix_user_sessions_user_id", UserSession.user_id)
 
 
-class Subscription(Base):
+class Subscription(MetadataAliasMixin, Base):
     """Tracks the lifecycle of a user's billing subscription."""
 
     __tablename__ = "subscriptions"
@@ -291,14 +321,6 @@ class Subscription(Base):
         passive_deletes=True,
     )
 
-    @property
-    def metadata(self) -> JSONDict:
-        return self.meta_data
-
-    @metadata.setter
-    def metadata(self, value: JSONDict) -> None:
-        self.meta_data = value
-
 
 Index("ix_subscriptions_user_status", Subscription.user_id, Subscription.status)
 Index(
@@ -310,7 +332,7 @@ Index(
 )
 
 
-class SubscriptionHistory(Base):
+class SubscriptionHistory(MetadataAliasMixin, Base):
     """Immutable snapshots capturing subscription changes."""
 
     __tablename__ = "subscription_history"
@@ -354,14 +376,6 @@ class SubscriptionHistory(Base):
 
     subscription: Mapped[Subscription] = relationship(back_populates="history")
 
-    @property
-    def metadata(self) -> JSONDict:
-        return self.meta_data
-
-    @metadata.setter
-    def metadata(self, value: JSONDict) -> None:
-        self.meta_data = value
-
 
 Index(
     "ix_subscription_history_subscription_id",
@@ -369,7 +383,7 @@ Index(
 )
 
 
-class Payment(Base):
+class Payment(MetadataAliasMixin, Base):
     """Represents a monetary settlement attempt for a subscription."""
 
     __tablename__ = "payments"
@@ -409,14 +423,6 @@ class Payment(Base):
         back_populates="payment", cascade="all, delete-orphan", passive_deletes=True
     )
 
-    @property
-    def metadata(self) -> JSONDict:
-        return self.meta_data
-
-    @metadata.setter
-    def metadata(self, value: JSONDict) -> None:
-        self.meta_data = value
-
 
 Index("ix_payments_user_id", Payment.user_id)
 Index("ix_payments_subscription_id", Payment.subscription_id)
@@ -430,7 +436,7 @@ Index(
 )
 
 
-class Transaction(Base):
+class Transaction(MetadataAliasMixin, Base):
     """Ledger line item tied to a payment and optionally a subscription."""
 
     __tablename__ = "transactions"
@@ -465,14 +471,6 @@ class Transaction(Base):
         back_populates="transactions"
     )
     user: Mapped[User] = relationship(back_populates="transactions")
-
-    @property
-    def metadata(self) -> JSONDict:
-        return self.meta_data
-
-    @metadata.setter
-    def metadata(self, value: JSONDict) -> None:
-        self.meta_data = value
 
 
 Index("ix_transactions_payment_id", Transaction.payment_id)

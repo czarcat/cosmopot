@@ -16,13 +16,19 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.db.base import Base, JSONDataMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from backend.db.base import (
+    Base,
+    JSONDataMixin,
+    MetadataAliasMixin,
+    TimestampMixin,
+    UUIDPrimaryKeyMixin,
+)
 from backend.db.types import GUID, JSONType
 
 from .enums import PaymentEventType, PaymentStatus
 
 
-class Payment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class Payment(MetadataAliasMixin, UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """Represents a payment attempt initiated via YooKassa."""
 
     __tablename__ = "payments"
@@ -56,18 +62,6 @@ class Payment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-
-
-# Add backward-compatible property after class definition
-def _get_payment_metadata(self: Payment) -> dict[str, Any]:
-    return self.meta_data
-
-
-def _set_payment_metadata(self: Payment, value: dict[str, Any]) -> None:
-    self.meta_data = value
-
-
-Payment.metadata = property(_get_payment_metadata, _set_payment_metadata)
 
 
 class PaymentEvent(UUIDPrimaryKeyMixin, TimestampMixin, JSONDataMixin, Base):
