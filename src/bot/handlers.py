@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypedDict, cast
 
 from aiogram import Bot, Router
 from aiogram.filters import Command, StateFilter
@@ -30,9 +30,44 @@ from .services import BackendClient, GenerationService
 from .validators import validate_image
 
 
+class GenerationStateData(TypedDict, total=False):
+    """Type definition for FSM state data during generation flow."""
+
+    photo_file_id: str
+    photo_file_name: str | None
+    photo_file_size: int | None
+    category: str
+    prompt: str
+    parameter_key: str
+    parameters: dict[str, Any]
+    parameter_label: str
+
+
 def _extract_user_id(entity: Message | CallbackQuery) -> int | None:
-    user = getattr(entity, "from_user", None)
-    return getattr(user, "id", None)
+    """Extract user ID from either a Message or CallbackQuery entity."""
+    if isinstance(entity, Message):
+        user = entity.from_user
+    elif isinstance(entity, CallbackQuery):
+        user = entity.from_user
+    else:
+        return None
+    return user.id if user else None
+
+
+def _get_callback_message(callback: CallbackQuery) -> Message | None:
+    """Return the message associated with a callback query if available."""
+    message = callback.message
+    if message is None:
+        return None
+    if not isinstance(message, Message):
+        return None
+    return message
+
+
+async def _get_generation_state_data(state: FSMContext) -> GenerationStateData:
+    """Fetch FSM state data as a typed dictionary."""
+    data = await state.get_data()
+    return cast(GenerationStateData, data)
 
 
 class CoreCommandHandlers:
@@ -172,22 +207,21 @@ class GenerationHandlers:
         )
 
     async def on_photo(self, message: Message, state: FSMContext) -> None:
-        document = getattr(message, "document", None)
-        photo_sizes = getattr(message, "photo", None)
         file_name: str | None = None
         file_id: str | None = None
         mime_type: str | None = None
         file_size: int | None = None
 
-        if document is not None:
-            file_name = getattr(document, "file_name", None)
-            file_id = getattr(document, "file_id", None)
-            mime_type = getattr(document, "mime_type", None)
-            file_size = getattr(document, "file_size", None)
-        elif photo_sizes:
-            photo = photo_sizes[-1]
-            file_id = getattr(photo, "file_id", None)
-            file_size = getattr(photo, "file_size", None)
+        if message.document is not None:
+            document = message.document
+            file_name = document.file_name
+            file_id = document.file_id
+            mime_type = document.mime_type
+            file_size = document.file_size
+        elif message.photo:
+            photo = message.photo[-1]
+            file_id = photo.file_id
+            file_size = photo.file_size
             mime_type = "image/jpeg"
         else:
             await message.answer("Please send a JPEG or PNG image to continue.")
@@ -222,6 +256,13 @@ class GenerationHandlers:
         callback_data: CategoryCallback,
         state: FSMContext,
     ) -> None:
+        message = _get_callback_message(callback)
+        if message is None:
+            await callback.answer(
+                "Unable to process the selected category. Please try again.",
+                show_alert=True,
+            )
+            return
         await callback.answer()
         category = callback_data.value
         await state.update_data(category=category)
@@ -229,7 +270,7 @@ class GenerationHandlers:
         prompts = PROMPTS_BY_CATEGORY.get(
             category, ["Describe the scene you would like to create."]
         )
-        await callback.message.answer(
+        await message.answer(
             f"Category <b>{category}</b> selected. Pick a prompt to continue:",
             reply_markup=prompt_keyboard(category, prompts),
             parse_mode="HTML",
@@ -241,11 +282,18 @@ class GenerationHandlers:
         callback_data: PromptCallback,
         state: FSMContext,
     ) -> None:
+        message = _get_callback_message(callback)
+        if message is None:
+            await callback.answer(
+                "Unable to process the selected prompt. Please try again.",
+                show_alert=True,
+            )
+            return
         await callback.answer()
         prompt = callback_data.value
         await state.update_data(prompt=prompt)
         await state.set_state(GenerationStates.waiting_for_parameters)
-        await callback.message.answer(
+        await message.answer(
             "Choose the rendering preset that best matches your needs:",
             reply_markup=parameter_keyboard(),
         )
@@ -256,11 +304,18 @@ class GenerationHandlers:
         callback_data: ParameterCallback,
         state: FSMContext,
     ) -> None:
+        message = _get_callback_message(callback)
+        if message is None:
+            await callback.answer(
+                "Unable to process the selected parameters. Please try again.",
+                show_alert=True,
+            )
+            return
         await callback.answer()
         preset_key = callback_data.value
         preset = PARAMETER_PRESETS.get(preset_key)
         if not preset:
-            await callback.message.answer("Unknown preset selected. Please try again.")
+            await message.answer("Unknown preset selected. Please try again.")
             return
         await state.update_data(
             parameter_key=preset_key,
@@ -268,9 +323,9 @@ class GenerationHandlers:
             parameter_label=preset.get("title", preset_key.title()),
         )
         await state.set_state(GenerationStates.waiting_for_confirmation)
-        data = await state.get_data()
+        data = await _get_generation_state_data(state)
         summary = self._format_summary(data)
-        await callback.message.answer(
+        await message.answer(
             summary,
             reply_markup=confirmation_keyboard(),
             parse_mode="HTML",
@@ -282,28 +337,50 @@ class GenerationHandlers:
         callback_data: ConfirmationCallback,
         state: FSMContext,
     ) -> None:
+        message = _get_callback_message(callback)
+        if message is None:
+            await callback.answer(
+                "Unable to process the confirmation. Please try again.",
+                show_alert=True,
+            )
+            await state.clear()
+            return
         await callback.answer()
         if callback_data.action == "restart":
             await state.set_state(GenerationStates.waiting_for_photo)
-            await callback.message.answer("Alright, send a new image to start over.")
+            await message.answer("Alright, send a new image to start over.")
             return
 
-        data = await state.get_data()
+        data = await _get_generation_state_data(state)
         user_id = _extract_user_id(callback)
         if user_id is None:
-            await callback.message.answer("Unable to determine your Telegram ID.")
+            await message.answer("Unable to determine your Telegram ID.")
             await state.clear()
             return
 
+        category = data.get("category")
+        prompt = data.get("prompt")
+        parameters = data.get("parameters")
+        photo_file_id = data.get("photo_file_id")
+        if (
+            category is None
+            or prompt is None
+            or parameters is None
+            or photo_file_id is None
+        ):
+            await message.answer("Generation data is incomplete. Please start over.")
+            await state.set_state(GenerationStates.waiting_for_photo)
+            return
+
         request = GenerationRequest(
-            category=str(data.get("category")),
-            prompt=str(data.get("prompt")),
-            parameters=dict(data.get("parameters", {})),
-            source_file_id=str(data.get("photo_file_id")),
+            category=category,
+            prompt=prompt,
+            parameters=dict(parameters),
+            source_file_id=photo_file_id,
             source_file_name=data.get("photo_file_name"),
         )
         await state.set_state(GenerationStates.displaying_result)
-        progress_message = await callback.message.answer("🚀 Generation in progress…")
+        progress_message = await message.answer("🚀 Generation in progress…")
 
         async def _on_progress(update: GenerationUpdate) -> None:
             text = update.format_progress()
@@ -318,15 +395,17 @@ class GenerationHandlers:
             await state.set_state(GenerationStates.waiting_for_photo)
             return
         await progress_message.edit_text("✅ Generation complete!")
-        await callback.message.answer(result.to_message(), parse_mode="HTML")
+        await message.answer(result.to_message(), parse_mode="HTML")
         await state.clear()
 
     @staticmethod
-    def _format_summary(data: dict[str, Any]) -> str:
-        preset_label = data.get("parameter_label", "Custom")
+    def _format_summary(data: GenerationStateData) -> str:
+        preset_label = data.get("parameter_label") or "Custom"
+        category = data.get("category") or "Unknown"
+        prompt = data.get("prompt") or "No prompt selected"
         lines = ["🧾 <b>Review your configuration</b>"]
-        lines.append(f"Category: {data.get('category')}")
-        lines.append(f"Prompt: {data.get('prompt')}")
+        lines.append(f"Category: {category}")
+        lines.append(f"Prompt: {prompt}")
         lines.append(f"Preset: {preset_label}")
         return "\n".join(lines)
 
