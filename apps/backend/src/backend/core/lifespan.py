@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI
-from fastapi.types import Lifespan
+from starlette.types import Lifespan
 
 from backend.auth.rate_limiter import RateLimiter
 from backend.core.config import Settings
