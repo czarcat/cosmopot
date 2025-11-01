@@ -10,13 +10,13 @@ from httpx import AsyncClient
 from redis.asyncio import Redis
 
 from backend.core.config import Settings
-from bot.handlers import get_routers
-from bot.middlewares import (
+from bot_runtime.handlers import get_routers
+from bot_runtime.middlewares import (
     DependencyInjectionMiddleware,
     ErrorHandlingMiddleware,
     LoggingMiddleware,
 )
-from bot.services.auth import TelegramAuthGateway
+from bot_runtime.services.auth import TelegramAuthGateway
 
 __all__ = ["BotRuntime"]
 

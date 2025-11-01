@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import ValidationError
 
 from backend.core.config import Settings
-from bot import BotRuntime
+from bot_runtime.runtime import BotRuntime
 
 __all__ = ["router"]
 

@@ -9,7 +9,7 @@ from aiogram.types import Update
 from fastapi import FastAPI
 
 from backend.api.routes.bot import router as bot_router
-from bot.runtime import BotRuntime
+from bot_runtime.runtime import BotRuntime
 
 
 @pytest.mark.asyncio
