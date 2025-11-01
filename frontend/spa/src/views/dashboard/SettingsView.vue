@@ -11,15 +11,15 @@
       <h2>Theme</h2>
       <div class="settings-view__options" role="group" aria-label="Theme selection">
         <label class="settings-view__option">
-          <input v-model="theme" type="radio" name="theme" value="system">
+          <input v-model="theme" type="radio" name="theme" value="system" />
           <span>System</span>
         </label>
         <label class="settings-view__option">
-          <input v-model="theme" type="radio" name="theme" value="light">
+          <input v-model="theme" type="radio" name="theme" value="light" />
           <span>Light</span>
         </label>
         <label class="settings-view__option">
-          <input v-model="theme" type="radio" name="theme" value="dark">
+          <input v-model="theme" type="radio" name="theme" value="dark" />
           <span>Dark</span>
         </label>
       </div>
@@ -31,11 +31,11 @@
         Choose delivery channels when rate limits or errors occur.
       </p>
       <label class="settings-view__toggle">
-        <input type="checkbox" v-model="emailAlerts">
+        <input v-model="emailAlerts" type="checkbox" />
         <span>Email alerts</span>
       </label>
       <label class="settings-view__toggle">
-        <input type="checkbox" v-model="slackAlerts">
+        <input v-model="slackAlerts" type="checkbox" />
         <span>Slack alerts</span>
       </label>
     </div>
@@ -66,12 +66,12 @@ watchEffect(() => {
 }
 
 .settings-view__panel {
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border-subtle);
-  padding: var(--space-5);
   background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
   display: grid;
   gap: var(--space-4);
+  padding: var(--space-5);
 }
 
 .settings-view__options {
@@ -81,13 +81,13 @@ watchEffect(() => {
 }
 
 .settings-view__option {
-  display: inline-flex;
   align-items: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  cursor: pointer;
 }
 
 .settings-view__option input {
@@ -100,9 +100,9 @@ watchEffect(() => {
 }
 
 .settings-view__toggle {
-  display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  display: inline-flex;
   font-weight: 500;
+  gap: var(--space-2);
 }
 </style>

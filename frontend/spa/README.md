@@ -36,23 +36,23 @@ The application will be available at [http://localhost:5173](http://localhost:51
 
 ## Scripts
 
-| Command | Description |
-| --- | --- |
-| `pnpm dev` | Start development server |
-| `pnpm build` | Build for production |
-| `pnpm preview` | Preview production build |
-| `pnpm lint` | Run all linters (ESLint, Stylelint, Prettier) |
-| `pnpm lint:js` | Run ESLint |
-| `pnpm lint:style` | Run Stylelint |
-| `pnpm lint:style:fix` | Fix Stylelint issues |
-| `pnpm format` | Format code with Prettier |
-| `pnpm format:check` | Check Prettier formatting |
-| `pnpm typecheck` | Run TypeScript type checks |
-| `pnpm test` | Run unit tests |
-| `pnpm test:unit` | Run unit tests in watch mode |
-| `pnpm test:coverage` | Run tests with coverage report |
-| `pnpm test:e2e` | Run end-to-end tests |
-| `pnpm check` | Run all checks (lint, typecheck, test) |
+| Command               | Description                                   |
+| --------------------- | --------------------------------------------- |
+| `pnpm dev`            | Start development server                      |
+| `pnpm build`          | Build for production                          |
+| `pnpm preview`        | Preview production build                      |
+| `pnpm lint`           | Run all linters (ESLint, Stylelint, Prettier) |
+| `pnpm lint:js`        | Run ESLint                                    |
+| `pnpm lint:style`     | Run Stylelint                                 |
+| `pnpm lint:style:fix` | Fix Stylelint issues                          |
+| `pnpm format`         | Format code with Prettier                     |
+| `pnpm format:check`   | Check Prettier formatting                     |
+| `pnpm typecheck`      | Run TypeScript type checks                    |
+| `pnpm test`           | Run unit tests                                |
+| `pnpm test:unit`      | Run unit tests in watch mode                  |
+| `pnpm test:coverage`  | Run tests with coverage report                |
+| `pnpm test:e2e`       | Run end-to-end tests                          |
+| `pnpm check`          | Run all checks (lint, typecheck, test)        |
 
 ## Tech Stack
 

@@ -54,31 +54,31 @@ const handleLogout = async () => {
 
 <style scoped>
 .app-header {
+  align-items: center;
+  display: flex;
+  gap: var(--space-4);
   margin: 0 auto;
   max-width: var(--layout-max-width);
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
   padding: var(--space-4) clamp(var(--space-4), 4vw, var(--space-10));
 }
 
 .app-header__brand {
-  display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  font-weight: 600;
-  text-decoration: none;
   color: inherit;
+  display: inline-flex;
+  font-weight: 600;
+  gap: var(--space-2);
+  text-decoration: none;
 }
 
 .app-header__logo {
-  display: grid;
-  place-content: center;
-  inline-size: 2.4rem;
+  background: linear-gradient(135deg, var(--accent-emphasis), var(--accent-base));
   block-size: 2.4rem;
   border-radius: 0.8rem;
-  background: linear-gradient(135deg, var(--accent-emphasis), var(--accent-base));
   color: var(--surface-base);
+  display: grid;
+  inline-size: 2.4rem;
+  place-content: center;
 }
 
 .app-header__title {
@@ -87,15 +87,15 @@ const handleLogout = async () => {
 }
 
 .app-header__nav {
-  display: none;
   align-items: center;
+  display: none;
   gap: var(--space-4);
   margin-left: auto;
 }
 
 .app-header__nav-link {
-  font-weight: 500;
   color: var(--text-muted);
+  font-weight: 500;
   text-decoration: none;
   transition: color 160ms ease;
 }
@@ -106,31 +106,31 @@ const handleLogout = async () => {
 }
 
 .app-header__actions {
-  margin-left: auto;
-  display: flex;
   align-items: center;
+  display: flex;
   gap: var(--space-3);
+  margin-left: auto;
 }
 
 .app-header__user {
-  display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-lg);
   background: var(--surface-base);
   border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  display: inline-flex;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
 }
 
 .app-header__avatar {
-  inline-size: 2.25rem;
+  background: var(--accent-subtle);
   block-size: 2.25rem;
   border-radius: 999px;
-  background: var(--accent-subtle);
-  display: grid;
-  place-content: center;
-  font-weight: 600;
   color: var(--accent-emphasis);
+  display: grid;
+  font-weight: 600;
+  inline-size: 2.25rem;
+  place-content: center;
 }
 
 .app-header__user-details {
@@ -144,19 +144,19 @@ const handleLogout = async () => {
 }
 
 .app-header__user-role {
-  font-size: 0.75rem;
   color: var(--text-muted);
+  font-size: 0.75rem;
 }
 
 .app-header__signout,
 .app-header__signin {
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
   background: var(--surface-strong);
+  border: none;
+  border-radius: var(--radius-md);
   color: var(--text-primary);
+  cursor: pointer;
+  font-weight: 600;
+  padding: var(--space-2) var(--space-4);
   text-decoration: none;
   transition: background 160ms ease;
 }
@@ -166,7 +166,7 @@ const handleLogout = async () => {
   background: var(--surface-highlight);
 }
 
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .app-header__nav {
     display: inline-flex;
   }

@@ -4,12 +4,12 @@
 
 html,
 body {
-  margin: 0;
-  padding: 0;
-  font-family: var(--font-sans);
   background: var(--surface-subtle);
   color: var(--text-primary);
+  font-family: var(--font-sans);
+  margin: 0;
   min-height: 100%;
+  padding: 0;
 }
 
 a {
@@ -32,6 +32,6 @@ input {
 }
 
 body {
-  line-height: 1.5;
   font-size: 16px;
+  line-height: 1.5;
 }

@@ -4,6 +4,8 @@ module.exports = {
   rules: {
     "color-no-invalid-hex": true,
     "order/properties-alphabetical-order": true,
+    "selector-class-pattern": null,
+    "media-feature-range-notation": null,
   },
   overrides: [
     {

@@ -11,8 +11,8 @@
       <button
         class="dashboard-view__cta"
         type="button"
-        @click="refreshNow"
         :disabled="isRefreshing"
+        @click="refreshNow"
       >
         {{ isRefreshing ? "Refreshing…" : "Refresh session" }}
       </button>
@@ -143,10 +143,10 @@ onMounted(async () => {
 }
 
 .dashboard-view__heading {
+  align-items: flex-start;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  align-items: flex-start;
 }
 
 .dashboard-view__title {
@@ -161,30 +161,30 @@ onMounted(async () => {
 }
 
 .dashboard-view__cta {
-  margin-left: auto;
-  display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--accent-base);
   background: var(--accent-subtle);
+  border: 1px solid var(--accent-base);
+  border-radius: var(--radius-md);
   color: var(--accent-emphasis);
-  font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  font-weight: 600;
+  gap: var(--space-2);
+  margin-left: auto;
+  padding: var(--space-2) var(--space-4);
   transition:
     transform 160ms ease,
     box-shadow 160ms ease;
 }
 
 .dashboard-view__cta:disabled {
-  opacity: 0.6;
   cursor: progress;
+  opacity: 0.6;
 }
 
 .dashboard-view__cta:not(:disabled):hover {
-  transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
 }
 
 .dashboard-grid {
@@ -194,12 +194,12 @@ onMounted(async () => {
 
 .dashboard-card {
   background: var(--surface-base);
-  border-radius: var(--radius-xl);
-  padding: var(--space-5);
   border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xs);
   display: grid;
   gap: var(--space-4);
+  padding: var(--space-5);
 }
 
 .dashboard-card--span-2 {
@@ -207,29 +207,29 @@ onMounted(async () => {
 }
 
 .dashboard-card__header {
+  align-items: center;
   display: flex;
   justify-content: space-between;
-  align-items: center;
 }
 
 .dashboard-chip {
-  padding: 0.25rem 0.65rem;
+  border: 1px solid transparent;
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 600;
-  border: 1px solid transparent;
+  padding: 0.25rem 0.65rem;
 }
 
 .dashboard-chip--success {
   background: var(--success-subtle);
-  color: var(--success-emphasis);
   border-color: var(--success-base);
+  color: var(--success-emphasis);
 }
 
 .dashboard-chip--danger {
   background: var(--danger-subtle);
-  color: var(--danger-emphasis);
   border-color: var(--danger-base);
+  color: var(--danger-emphasis);
 }
 
 .snapshot {
@@ -238,10 +238,10 @@ onMounted(async () => {
 }
 
 .snapshot__item dt {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
   color: var(--text-muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .snapshot__item dd {
@@ -256,10 +256,10 @@ onMounted(async () => {
 }
 
 .dashboard-card__suffix {
+  color: var(--text-muted);
   font-size: 1rem;
   font-weight: 500;
   margin-left: 0.5rem;
-  color: var(--text-muted);
 }
 
 .dashboard-card__legend {
@@ -271,15 +271,15 @@ onMounted(async () => {
   display: grid;
   gap: var(--space-3);
   list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
 }
 
 .dashboard-dot {
-  inline-size: 0.75rem;
   block-size: 0.75rem;
   border-radius: 999px;
   display: inline-block;
+  inline-size: 0.75rem;
   margin-inline-end: 0.65rem;
 }
 
@@ -295,10 +295,10 @@ onMounted(async () => {
   background: var(--danger-base);
 }
 
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .dashboard-view__heading {
-    flex-direction: row;
     align-items: center;
+    flex-direction: row;
   }
 
   .dashboard-grid {
@@ -316,7 +316,7 @@ onMounted(async () => {
   }
 }
 
-@media (min-width: 1200px) {
+@media (width >= 1200px) {
   .dashboard-card--span-2 {
     grid-column: span 6;
   }
