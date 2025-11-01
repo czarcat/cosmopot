@@ -4,19 +4,29 @@ import asyncio
 import json
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any
+from importlib import import_module
+from types import ModuleType
+from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID
 
 import aio_pika
 import structlog
 
+if TYPE_CHECKING:
+    from aioboto3.session import Session as Aioboto3Session
+else:  # pragma: no cover - runtime fallback without typing dependencies
+    Aioboto3Session = Any
+
 try:  # pragma: no cover - boto3 fallback for environments without aioboto3
-    import aioboto3  # type: ignore
+    aioboto3_module = import_module("aioboto3")
 except ModuleNotFoundError:  # pragma: no cover
-    aioboto3 = None  # type: ignore[assignment]
-    import boto3
+    aioboto3_module = None
+    boto3_module = import_module("boto3")
 else:  # pragma: no cover
-    boto3 = None  # type: ignore[assignment]
+    boto3_module = None
+
+aioboto3 = cast(ModuleType | None, aioboto3_module)
+boto3 = cast(ModuleType | None, boto3_module)
 
 from backend.core.config import Settings
 
@@ -44,8 +54,12 @@ class S3Storage:
             if settings.s3.secret_access_key
             else None
         )
+        self._session: Aioboto3Session | None = None
         if aioboto3 is not None:
-            self._session = aioboto3.Session(  # type: ignore[call-arg]
+            session_factory = cast(
+                Callable[..., Aioboto3Session], getattr(aioboto3, "Session")
+            )
+            self._session = session_factory(
                 aws_access_key_id=self._access_key,
                 aws_secret_access_key=self._secret_key,
                 region_name=settings.s3.region,
@@ -73,37 +87,46 @@ class S3Storage:
         extension: str,
     ) -> S3UploadResult:
         key = f"input/{user_id}/{task_id}{extension}"
+        url: str
 
         if aioboto3 is not None and self._session is not None:
             client_kwargs = self._client_kwargs()
             async with self._session.client("s3", **client_kwargs) as client:
-                await client.put_object(
+                s3_client = cast(Any, client)
+                await s3_client.put_object(
                     Bucket=self._settings.s3.bucket,
                     Key=key,
                     Body=content,
                     ContentType=content_type,
                     ACL="private",
                 )
-                url = client.generate_presigned_url(  # type: ignore[no-untyped-call]
-                    "get_object",
-                    Params={"Bucket": self._settings.s3.bucket, "Key": key},
-                    ExpiresIn=self._settings.s3.presign_ttl_seconds,
+                url = cast(
+                    str,
+                    s3_client.generate_presigned_url(
+                        "get_object",
+                        Params={"Bucket": self._settings.s3.bucket, "Key": key},
+                        ExpiresIn=self._settings.s3.presign_ttl_seconds,
+                    ),
                 )
         else:  # pragma: no cover - boto3 synchronous fallback
             assert boto3 is not None  # for type checkers
-            client = boto3.client("s3", **self._client_kwargs())
+            client_factory = cast(Callable[..., Any], getattr(boto3, "client"))
+            s3_client = client_factory("s3", **self._client_kwargs())
             await asyncio.to_thread(
-                client.put_object,
+                s3_client.put_object,
                 Bucket=self._settings.s3.bucket,
                 Key=key,
                 Body=content,
                 ContentType=content_type,
                 ACL="private",
             )
-            url = client.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": self._settings.s3.bucket, "Key": key},
-                ExpiresIn=self._settings.s3.presign_ttl_seconds,
+            url = cast(
+                str,
+                s3_client.generate_presigned_url(
+                    "get_object",
+                    Params={"Bucket": self._settings.s3.bucket, "Key": key},
+                    ExpiresIn=self._settings.s3.presign_ttl_seconds,
+                ),
             )
 
         logger.info(
