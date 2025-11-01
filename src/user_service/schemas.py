@@ -37,7 +37,7 @@ def _coerce_mapping(value: Any) -> dict[str, Any]:
     raise ValueError("value must be a mapping")
 
 
-def _coerce_optional_mapping(value: Any) -> dict[str, Any | None]:
+def _coerce_optional_mapping(value: Any) -> dict[str, Any | None] | None:
     if value is None:
         return None
     if isinstance(value, dict):
@@ -381,7 +381,7 @@ class GenerationTaskRead(BaseModel):
 
 class GenerationTaskResultUpdate(BaseModel):
     result_asset_url: str | None = None
-    result_parameters: dict[str, Any | None] = None
+    result_parameters: dict[str, Any | None] | None = None
 
     @field_validator("result_asset_url")
     @classmethod
@@ -390,14 +390,14 @@ class GenerationTaskResultUpdate(BaseModel):
 
     @field_validator("result_parameters", mode="before")
     @classmethod
-    def validate_result_parameters(cls, value: Any) -> dict[str, Any | None]:
+    def validate_result_parameters(cls, value: Any) -> dict[str, Any | None] | None:
         return _coerce_optional_mapping(value)
 
 
 class GenerationTaskFailureUpdate(BaseModel):
     error: str = Field(..., min_length=1, max_length=500)
     result_asset_url: str | None = None
-    result_parameters: dict[str, Any | None] = None
+    result_parameters: dict[str, Any | None] | None = None
 
     @field_validator("result_asset_url")
     @classmethod
@@ -406,5 +406,5 @@ class GenerationTaskFailureUpdate(BaseModel):
 
     @field_validator("result_parameters", mode="before")
     @classmethod
-    def validate_result_parameters(cls, value: Any) -> dict[str, Any | None]:
+    def validate_result_parameters(cls, value: Any) -> dict[str, Any | None] | None:
         return _coerce_optional_mapping(value)

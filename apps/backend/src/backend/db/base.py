@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import uuid
-from typing import Any
+from typing import Any, Mapping, cast
 
 from sqlalchemy import DateTime, MetaData, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -21,7 +21,7 @@ metadata = MetaData(
 
 
 class Base(DeclarativeBase):
-    metadata = metadata
+    metadata: MetaData | dict[str, Any] = metadata
 
 
 class UUIDPrimaryKeyMixin:
@@ -57,6 +57,7 @@ class MetadataAliasMixin:
     Base.metadata."""
 
     _metadata_marker = object()
+    meta_data: dict[str, Any]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         metadata_value = kwargs.pop("metadata", self._metadata_marker)
@@ -64,17 +65,14 @@ class MetadataAliasMixin:
             kwargs["meta_data"] = metadata_value
         super().__init__(*args, **kwargs)
 
-    def __getattribute__(self, name: str) -> Any:
-        if name == "metadata":
-            return super().__getattribute__("meta_data")
-        return super().__getattribute__(name)
+    @property
+    def metadata(self) -> dict[str, Any]:
+        return cast(dict[str, Any], self.meta_data)
 
-    def __setattr__(self, key: str, value: Any) -> None:
-        if key == "metadata":
-            key = "meta_data"
-        super().__setattr__(key, value)
+    @metadata.setter
+    def metadata(self, value: Mapping[str, Any]) -> None:
+        self.meta_data = dict(value)
 
-    def __delattr__(self, name: str) -> None:
-        if name == "metadata":
-            name = "meta_data"
-        super().__delattr__(name)
+    @metadata.deleter
+    def metadata(self) -> None:
+        del self.meta_data
