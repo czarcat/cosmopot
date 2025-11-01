@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import AsyncIterator
 
-import pytest
 import pytest_asyncio
 from alembic import command
 from alembic.config import Config

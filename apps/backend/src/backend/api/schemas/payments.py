@@ -20,13 +20,17 @@ class PaymentCreateRequest(BaseModel):
     )
     cancel_url: HttpUrl | None = Field(
         default=None,
-        description="Optional URL to return to when the payment is cancelled by the user",
+        description=(
+            "Optional URL to return to when the payment is cancelled by the user"
+        ),
     )
     idempotency_key: str | None = Field(
         default=None,
         min_length=8,
         max_length=128,
-        description="Client-supplied idempotency key to safely retry payment initiation",
+        description=(
+            "Client-supplied idempotency key to safely retry payment initiation"
+        ),
     )
 
     model_config = ConfigDict(str_strip_whitespace=True)

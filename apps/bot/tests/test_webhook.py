@@ -54,7 +54,9 @@ async def test_webhook_route_dispatches_update(bot_settings, fake_redis) -> None
             )
 
             headers = {
-                "X-Telegram-Bot-Api-Secret-Token": bot_settings.telegram_webhook_secret_token.get_secret_value()
+                "X-Telegram-Bot-Api-Secret-Token": (
+                    bot_settings.telegram_webhook_secret_token.get_secret_value()
+                )
             }
 
             async with httpx.AsyncClient(

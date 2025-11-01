@@ -94,9 +94,9 @@ class BackendGateway:
                 refresh_token=data.get("refresh_token"),
                 expires_in=data.get("expires_in"),
                 refresh_expires_in=data.get("refresh_expires_in"),
-                session_id=str(data.get("session_id"))
-                if data.get("session_id")
-                else None,
+                session_id=(
+                    str(data.get("session_id")) if data.get("session_id") else None
+                ),
                 user=data.get("user"),
             )
         self._raise_error(response)
@@ -115,9 +115,9 @@ class BackendGateway:
                 refresh_token=data.get("refresh_token"),
                 expires_in=data.get("expires_in"),
                 refresh_expires_in=data.get("refresh_expires_in"),
-                session_id=str(data.get("session_id"))
-                if data.get("session_id")
-                else None,
+                session_id=(
+                    str(data.get("session_id")) if data.get("session_id") else None
+                ),
                 user=data.get("user"),
             )
         self._raise_error(response)

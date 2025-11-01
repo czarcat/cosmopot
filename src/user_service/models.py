@@ -2,7 +2,23 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, BigInteger, Boolean, CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint, func, text, 
+from typing import Any
+
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -279,7 +295,10 @@ def _set_subscription_history_metadata(self, value: dict) -> None:
     self.meta_data = value
 
 
-SubscriptionHistory.metadata = property(_get_subscription_history_metadata, _set_subscription_history_metadata)
+SubscriptionHistory.metadata = property(
+    _get_subscription_history_metadata,
+    _set_subscription_history_metadata,
+)
 
 
 class Payment(Base):
@@ -316,9 +335,7 @@ class Payment(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    subscription: Mapped[Subscription | None] = relationship(
-        back_populates="payments"
-    )
+    subscription: Mapped[Subscription | None] = relationship(back_populates="payments")
     user: Mapped[User] = relationship(back_populates="payments")
     transactions: Mapped[list["Transaction"]] = relationship(
         back_populates="payment", cascade="all, delete-orphan", passive_deletes=True

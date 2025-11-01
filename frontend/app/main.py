@@ -30,32 +30,50 @@ TEMPLATES_DIR = Path(__file__).parent / "templates"
 _PROMPT_CATALOG = [
     {
         "title": "Neon skyline",
-        "prompt": "a futuristic neon-lit skyline at dusk, ultra wide angle, cinematic lighting, volumetric fog",
+        "prompt": (
+            "a futuristic neon-lit skyline at dusk, ultra wide angle, "
+            "cinematic lighting, volumetric fog"
+        ),
         "category": "Futurism",
     },
     {
         "title": "Forest spirits",
-        "prompt": "ethereal spirits drifting through an ancient forest, bioluminescent highlights, studio ghibli style",
+        "prompt": (
+            "ethereal spirits drifting through an ancient forest, "
+            "bioluminescent highlights, studio ghibli style"
+        ),
         "category": "Fantasy",
     },
     {
         "title": "Architectural concept",
-        "prompt": "minimalist concrete museum atrium flooded with natural light, brutalist symmetry, ray-traced reflections",
+        "prompt": (
+            "minimalist concrete museum atrium flooded with natural light, "
+            "brutalist symmetry, ray-traced reflections"
+        ),
         "category": "Concept art",
     },
     {
         "title": "Product hero",
-        "prompt": "sleek wearable device floating above a rippled water surface, dramatic rim lighting, product photography",
+        "prompt": (
+            "sleek wearable device floating above a rippled water surface, "
+            "dramatic rim lighting, product photography"
+        ),
         "category": "Product",
     },
     {
         "title": "Editorial portrait",
-        "prompt": "editorial portrait of a musician surrounded by floating musical notes, soft depth of field, warm tones",
+        "prompt": (
+            "editorial portrait of a musician surrounded by floating "
+            "musical notes, soft depth of field, warm tones"
+        ),
         "category": "Portrait",
     },
     {
         "title": "Nature macro",
-        "prompt": "super macro shot of a dew-covered leaf with prismatic refraction, 8k, hyperrealistic",
+        "prompt": (
+            "super macro shot of a dew-covered leaf with prismatic refraction, "
+            "8k, hyperrealistic"
+        ),
         "category": "Nature",
     },
 ]
@@ -79,7 +97,9 @@ _PRICING_PLANS = [
     {
         "code": "pro",
         "name": "Studio",
-        "description": "Priority rendering, collaboration seats, and automation hooks.",
+        "description": (
+            "Priority rendering, collaboration seats, and automation hooks."
+        ),
         "price": "29.99",
         "currency": "RUB",
         "features": [
@@ -93,7 +113,9 @@ _PRICING_PLANS = [
     {
         "code": "enterprise",
         "name": "Enterprise",
-        "description": "Guaranteed throughput with advanced compliance and premium care.",
+        "description": (
+            "Guaranteed throughput with advanced compliance and premium care."
+        ),
         "price": "99.99",
         "currency": "RUB",
         "features": [
@@ -580,7 +602,10 @@ async def generate_submit(
     _flash(
         request,
         "success",
-        f"Generation task queued: {task_payload.get('task_id', task_payload.get('id'))}",
+        (
+            "Generation task queued: "
+            f"{task_payload.get('task_id', task_payload.get('id'))}"
+        ),
     )
     return RedirectResponse(
         url=request.url_for("history"), status_code=status.HTTP_303_SEE_OTHER

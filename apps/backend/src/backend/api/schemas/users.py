@@ -29,11 +29,15 @@ class QuotaSummary(BaseModel):
         ..., ge=0, description="Placeholder quota for included credits per month."
     )
     remaining_allocation: int = Field(
-        ..., ge=0, description="Placeholder for remaining credits after consumption."
+        ...,
+        ge=0,
+        description="Placeholder for remaining credits after consumption.",
     )
     requires_top_up: bool = Field(
         ...,
-        description="Indicates whether balance is low enough to trigger a top-up warning.",
+        description=(
+            "Indicates whether balance is low enough to trigger a top-up warning."
+        ),
     )
 
     model_config = ConfigDict(extra="forbid")

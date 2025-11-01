@@ -32,7 +32,7 @@ class TaskStatusBroadcaster:
     async def publish(
         self, task: GenerationTask, *, event: str = "update"
     ) -> dict[str, Any]:
-        """Serialize the task state, persist it for reconnects, and publish to subscribers."""
+        """Serialize state for reconnects and publish updates to subscribers."""
 
         payload = await self._build_payload(task, event=event)
         await self._store_state(task.id, payload)

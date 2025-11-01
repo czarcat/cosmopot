@@ -46,7 +46,7 @@ async def test_auth_gateway_signs_payload_correctly() -> None:
         f"{key}={value}" for key, value in payload.data_check_items()
     )
     expected_hash = hmac.new(
-        hashlib.sha256("super-secret-token".encode("utf-8")).digest(),
+        hashlib.sha256(b"super-secret-token").digest(),
         data_check_string.encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()

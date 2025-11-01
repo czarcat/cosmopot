@@ -119,8 +119,9 @@ class QueuePublisher:
     def __init__(
         self,
         settings: Settings,
-        connection_factory: Callable[[str], Awaitable[aio_pika.RobustConnection]]
-        | None = None,
+        connection_factory: (
+            Callable[[str], Awaitable[aio_pika.RobustConnection]] | None
+        ) = None,
     ) -> None:
         self._settings = settings
         self._connection_factory = connection_factory

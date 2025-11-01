@@ -66,7 +66,10 @@ def create_app() -> FastAPI:
         {"name": "auth", "description": "Authentication and session management"},
         {
             "name": "users",
-            "description": "User profile management, balance adjustments, session lifecycle, and GDPR stubs.",
+            "description": (
+                "User profile management, balance adjustments, session lifecycle, "
+                "and GDPR stubs."
+            ),
         },
     ]
 
