@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
-
 import asyncio
 import base64
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -12,7 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from user_service import repository
 from user_service.enums import GenerationTaskStatus
 from user_service.models import GenerationTask
-from user_service.schemas import GenerationTaskFailureUpdate, GenerationTaskResultUpdate
+from user_service.schemas import (
+    GenerationTaskFailureUpdate,
+    GenerationTaskResultUpdate,
+)
 
 from .banana import GeminiNanoError
 from .bootstrap import RuntimeState

@@ -12,6 +12,8 @@ from uuid import UUID
 import aio_pika
 import structlog
 
+from backend.core.config import Settings
+
 if TYPE_CHECKING:
     from aioboto3.session import Session as Aioboto3Session
 else:  # pragma: no cover - runtime fallback without typing dependencies
@@ -27,8 +29,6 @@ else:  # pragma: no cover
 
 aioboto3 = cast(ModuleType | None, aioboto3_module)
 boto3 = cast(ModuleType | None, boto3_module)
-
-from backend.core.config import Settings
 
 logger = structlog.get_logger(__name__)
 
@@ -56,9 +56,7 @@ class S3Storage:
         )
         self._session: Aioboto3Session | None = None
         if aioboto3 is not None:
-            session_factory = cast(
-                Callable[..., Aioboto3Session], getattr(aioboto3, "Session")
-            )
+            session_factory = cast(Callable[..., Aioboto3Session], aioboto3.Session)
             self._session = session_factory(
                 aws_access_key_id=self._access_key,
                 aws_secret_access_key=self._secret_key,
@@ -110,7 +108,7 @@ class S3Storage:
                 )
         else:  # pragma: no cover - boto3 synchronous fallback
             assert boto3 is not None  # for type checkers
-            client_factory = cast(Callable[..., Any], getattr(boto3, "client"))
+            client_factory = cast(Callable[..., Any], boto3.client)
             s3_client = client_factory("s3", **self._client_kwargs())
             await asyncio.to_thread(
                 s3_client.put_object,

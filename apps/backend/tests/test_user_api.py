@@ -11,7 +11,13 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from user_service.enums import SubscriptionTier, UserRole
-from user_service.models import Subscription, SubscriptionPlan, User, UserProfile, UserSession
+from user_service.models import (
+    Subscription,
+    SubscriptionPlan,
+    User,
+    UserProfile,
+    UserSession,
+)
 
 
 async def _persist(session: AsyncSession, instance: Any) -> Any:

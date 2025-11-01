@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Any, TypeAlias
 
 from sqlalchemy import (
+    JSON,
     BigInteger,
     Boolean,
     CheckConstraint,
@@ -13,7 +14,6 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    JSON,
     Numeric,
     String,
     Text,
@@ -43,7 +43,8 @@ class Base(DeclarativeBase):
 
 
 class MetadataAliasMixin:
-    """Provide instance-level access to JSON metadata without shadowing Base.metadata."""
+    """Provide instance-level access to JSON metadata without shadowing
+    Base.metadata."""
 
     _metadata_marker = object()
 

@@ -7,7 +7,7 @@ import json
 import os
 import sys
 import time
-from typing import Callable
+from collections.abc import Callable
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -96,4 +96,4 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except RuntimeError as err:
         print(f"[error] {err}", file=sys.stderr)
-        raise SystemExit(1)
+        raise SystemExit(1) from err

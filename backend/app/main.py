@@ -26,7 +26,7 @@ instrumentator = Instrumentator()
 if TYPE_CHECKING:
     from minio import Minio
 
-minio_client: "Minio" | None = None
+minio_client: Minio | None = None
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 

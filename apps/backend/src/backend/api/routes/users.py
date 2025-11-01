@@ -123,7 +123,9 @@ def _normalised_plan(plan_snapshot: PlanSnapshot | None) -> str:
     return "free"
 
 
-def _quota_summary(plan_snapshot: PlanSnapshot | None, balance: Decimal) -> QuotaSummary:
+def _quota_summary(
+    plan_snapshot: PlanSnapshot | None, balance: Decimal
+) -> QuotaSummary:
     """Generate a QuotaSummary from a plan snapshot and user balance."""
     plan_key = _normalised_plan(plan_snapshot)
     monthly_allocation = _QUOTA_PRESETS.get(plan_key, 5_000)
