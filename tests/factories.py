@@ -4,7 +4,16 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from itertools import count
 from secrets import token_hex
-from typing import Any, GenerationTaskStatus, PaymentStatus, PromptSource, SubscriptionStatus, SubscriptionTier, TransactionType, UserRole, 
+from typing import Any
+
+from user_service.enums import (
+    GenerationTaskStatus,
+    PaymentStatus,
+    PromptSource,
+    SubscriptionStatus,
+    SubscriptionTier,
+    TransactionType,
+    UserRole,
 )
 from user_service.schemas import (
     GenerationTaskCreate,

@@ -10,7 +10,7 @@ from starlette.types import ASGIApp
 from backend.auth.dependencies import CurrentUser
 from backend.auth.exceptions import InvalidTokenError, TokenExpiredError
 from backend.auth.models import User, UserSession
-from backend.auth.tokens import TokenPayload, TokenService
+from backend.auth.tokens import TokenService
 from backend.db.session import get_session_factory
 
 

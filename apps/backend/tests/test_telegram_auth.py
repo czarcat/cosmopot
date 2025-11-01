@@ -90,9 +90,7 @@ async def test_telegram_auth_signature_mismatch(async_client: AsyncClient) -> No
 
 @pytest.mark.asyncio
 async def test_telegram_auth_rejects_replay(async_client: AsyncClient) -> None:
-    stale_payload = build_payload(
-        auth_date=datetime.now(UTC) - timedelta(days=2)
-    )
+    stale_payload = build_payload(auth_date=datetime.now(UTC) - timedelta(days=2))
 
     response = await async_client.post("/api/v1/auth/telegram", json=stale_payload)
 

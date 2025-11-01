@@ -184,7 +184,7 @@ class TelegramAuthService:
     ) -> User:
         email = self._build_email(payload)
         hashed_password = hashlib.sha256(
-            f"{payload.id}:{payload.auth_date}".encode("utf-8")
+            f"{payload.id}:{payload.auth_date}".encode()
         ).hexdigest()
 
         user_data = UserCreate(

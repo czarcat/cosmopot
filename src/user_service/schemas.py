@@ -2,7 +2,15 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Any, EmailStr, Field, field_validator, model_validator, 
+from typing import Any
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator,
 )
 
 from .enums import (

@@ -19,7 +19,7 @@ from .bootstrap import RuntimeState
 from .images import ImageProcessingError, generate_thumbnail
 from .logging import get_logger
 from .redis_events import RedisNotifier
-from .storage import StorageClient, StorageError, parse_s3_url
+from .storage import StorageError, parse_s3_url
 
 
 @dataclass(slots=True)
