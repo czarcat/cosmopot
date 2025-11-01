@@ -4,6 +4,8 @@ import base64
 import io
 from dataclasses import dataclass
 from typing import Any
+
+import pytest
 from backend.app.celery_app import celery_app
 from backend.app.tasks import process_generation_task
 from backend.app.worker import bootstrap

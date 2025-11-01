@@ -20,8 +20,9 @@ from .models import (
     SubscriptionPlan,
     Transaction,
     User,
+    UserProfile,
+    UserSession,
 )
-from .schemas import UserProfile, UserSession
 
 __all__ = [
     "Base",
