@@ -9,7 +9,7 @@
         </p>
       </header>
 
-      <form @submit.prevent="handleSubmit" class="login-view__form">
+      <form class="login-view__form" @submit.prevent="handleSubmit">
         <label class="login-view__field">
           <span>Email</span>
           <input
@@ -18,7 +18,7 @@
             name="email"
             autocomplete="email"
             required
-          >
+          />
         </label>
 
         <label class="login-view__field">
@@ -29,7 +29,7 @@
             name="password"
             autocomplete="current-password"
             required
-          >
+          />
         </label>
 
         <button type="submit" class="login-view__submit" :disabled="isSubmitting">
@@ -97,22 +97,22 @@ const handleSubmit = async () => {
 
 <style scoped>
 .login-view {
-  min-height: clamp(70vh, 80vh, 100%);
   display: grid;
-  place-items: center;
+  min-height: clamp(70vh, 80vh, 100%);
   padding-block: var(--space-10);
+  place-items: center;
 }
 
 .login-view__card {
-  max-inline-size: 420px;
-  width: min(100%, 420px);
-  border-radius: var(--radius-2xl);
-  border: 1px solid var(--border-subtle);
-  padding: var(--space-10) clamp(var(--space-6), 5vw, var(--space-10));
   background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-md);
   display: grid;
   gap: var(--space-6);
+  max-inline-size: 420px;
+  padding: var(--space-10) clamp(var(--space-6), 5vw, var(--space-10));
+  width: min(100%, 420px);
 }
 
 .login-view__header h1 {
@@ -131,15 +131,15 @@ const handleSubmit = async () => {
 
 .login-view__field {
   display: grid;
-  gap: var(--space-2);
   font-weight: 500;
+  gap: var(--space-2);
 }
 
 .login-view__field input {
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-  padding: var(--space-3);
   background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
 }
 
 .login-view__field input:focus-visible {
@@ -148,18 +148,18 @@ const handleSubmit = async () => {
 }
 
 .login-view__submit {
+  background: linear-gradient(135deg, var(--accent-base), var(--accent-emphasis));
   border: none;
   border-radius: var(--radius-lg);
-  padding: var(--space-3);
-  background: linear-gradient(135deg, var(--accent-base), var(--accent-emphasis));
   color: var(--surface-base);
-  font-weight: 600;
   cursor: pointer;
+  font-weight: 600;
+  padding: var(--space-3);
 }
 
 .login-view__submit:disabled {
-  opacity: 0.65;
   cursor: progress;
+  opacity: 0.65;
 }
 
 .login-view__hint {

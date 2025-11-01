@@ -61,33 +61,33 @@ const iconFor = (variant: NotificationVariant) => {
 
 <style scoped>
 .notification-center {
-  position: fixed;
-  inset-inline-end: var(--space-6);
-  inset-block-start: var(--space-6);
   display: grid;
   gap: var(--space-3);
-  z-index: 50;
+  inset-block-start: var(--space-6);
+  inset-inline-end: var(--space-6);
   max-inline-size: min(360px, 90vw);
+  position: fixed;
+  z-index: 50;
 }
 
 .notification {
+  align-items: center;
   background: var(--surface-elevated);
   border: 1px solid var(--border-subtle);
   border-inline-start: 4px solid var(--accent-base);
   border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
   box-shadow: var(--shadow-md);
   color: var(--text-primary);
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4);
 }
 
 .notification__content {
-  display: flex;
-  gap: var(--space-3);
   align-items: flex-start;
+  display: flex;
   flex: 1;
+  gap: var(--space-3);
 }
 
 .notification__icon {
@@ -104,14 +104,14 @@ const iconFor = (variant: NotificationVariant) => {
 }
 
 .notification__detail {
-  font-size: 0.85rem;
   color: var(--text-muted);
+  font-size: 0.85rem;
 }
 
 .notification__dismiss {
   appearance: none;
-  border: none;
   background: transparent;
+  border: none;
   color: inherit;
   cursor: pointer;
   font-size: 1.25rem;
@@ -134,28 +134,29 @@ const iconFor = (variant: NotificationVariant) => {
 .notification-leave-active {
   transition: all 200ms ease;
 }
+
 .notification-enter-from,
 .notification-leave-to {
   opacity: 0;
   transform: translateY(-8px);
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .notification-center {
-    inset-inline: var(--space-4);
     inset-block-start: var(--space-4);
+    inset-inline: var(--space-4);
   }
 }
 
 .sr-only {
-  position: absolute;
-  width: 1px;
+  border: 0;
+  clip-path: inset(50%);
   height: 1px;
-  padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  padding: 0;
+  position: absolute;
   white-space: nowrap;
-  border: 0;
+  width: 1px;
 }
 </style>

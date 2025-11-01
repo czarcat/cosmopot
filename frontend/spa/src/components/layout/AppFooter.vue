@@ -33,14 +33,14 @@ const currentYear = new Date().getFullYear();
 
 <style scoped>
 .app-footer {
-  margin: 0 auto;
-  max-width: var(--layout-max-width);
+  align-items: flex-start;
+  color: var(--text-muted);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  align-items: flex-start;
   font-size: 0.9rem;
-  color: var(--text-muted);
+  gap: var(--space-3);
+  margin: 0 auto;
+  max-width: var(--layout-max-width);
 }
 
 .app-footer__links {
@@ -59,11 +59,11 @@ const currentYear = new Date().getFullYear();
   color: var(--text-primary);
 }
 
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .app-footer {
+    align-items: center;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
   }
 }
 </style>
