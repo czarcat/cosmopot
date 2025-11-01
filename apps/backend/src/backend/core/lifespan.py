@@ -12,7 +12,7 @@ from backend.core.config import Settings
 from backend.core.redis import close_redis, init_redis
 from backend.db.session import dispose_engine, get_engine
 from backend.generation.broadcaster import TaskStatusBroadcaster
-from bot import BotRuntime
+from bot_runtime.runtime import BotRuntime
 
 
 def create_lifespan(settings: Settings) -> Lifespan[FastAPI]:

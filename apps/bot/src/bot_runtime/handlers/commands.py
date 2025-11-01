@@ -8,7 +8,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from structlog.stdlib import BoundLogger
 
-from bot.services.auth import BotAuthenticationError, TelegramAuthGateway
+from bot_runtime.services.auth import (
+    BotAuthenticationError,
+    TelegramAuthGateway,
+)
 
 __all__ = ["router"]
 

@@ -8,7 +8,7 @@ import pytest
 from aiogram.fsm.storage.base import StorageKey
 from aiogram.types import Update
 
-from bot.runtime import BotRuntime
+from bot_runtime.runtime import BotRuntime
 
 
 @pytest.mark.asyncio

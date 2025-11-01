@@ -10,7 +10,7 @@ import pytest
 from aiogram.types import User
 
 from backend.services.telegram import TelegramLoginPayload
-from bot.services.auth import TelegramAuthGateway
+from bot_runtime.services.auth import TelegramAuthGateway
 
 
 @pytest.mark.asyncio

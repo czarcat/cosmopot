@@ -8,7 +8,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message, TelegramObject
 from structlog.stdlib import BoundLogger
 
-from bot.services.auth import TelegramAuthGateway
+from bot_runtime.services.auth import TelegramAuthGateway
 
 __all__ = ["DependencyInjectionMiddleware"]
 

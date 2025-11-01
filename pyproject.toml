@@ -62,6 +62,57 @@ warn_unused_configs = true
 # Allow src and apps/bot/src to share the "bot" namespace without duplicate-module errors; keep __init__.py files at each root for this to work.
 explicit_package_bases = true
 namespace_packages = true
+# Point mypy at all package roots so imports like `backend.*` and `bot.*` resolve.
+# Set mypy_path to resolve backend, bot, and user_service packages from their root locations
+mypy_path = "src:apps/backend/src:apps/bot/src:backend"
+# Check specific packages individually to avoid namespace package conflicts
+files = [
+    "src/bot",
+    "src/user_service",
+    "apps/backend/src/backend",
+    "apps/bot/src/bot_runtime",
+    "backend/app",
+    "migrations",
+    "tests",
+    "apps/backend/tests",
+    "apps/bot/tests",
+]
+exclude = [
+    "^\\.venv/",
+    "^frontend/",
+]
+
+# Silence missing type information for third-party packages without stubs.
+[[tool.mypy.overrides]]
+module = [
+    "aio_pika",
+    "aio_pika.*",
+    "aioboto3",
+    "aioboto3.*",
+    "aiogram",
+    "aiogram.*",
+    "boto3",
+    "boto3.*",
+    "botocore",
+    "botocore.*",
+    "celery",
+    "celery.*",
+    "minio",
+    "minio.*",
+    "prometheus_client",
+    "prometheus_fastapi_instrumentator",
+    "psycopg_pool",
+    "redis.asyncio",
+    "redis.asyncio.*",
+    "sentry_sdk",
+    "structlog",
+    "structlog.*",
+    "PIL",
+    "PIL.*",
+    "yookassa",
+    "yookassa.*",
+]
+ignore_missing_imports = true
 
 [tool.pydantic-mypy]
 init_typed = true
