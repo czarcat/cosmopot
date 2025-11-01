@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
@@ -29,8 +30,13 @@ from backend.api.schemas.users import (
     UserResponse,
 )
 from backend.db.dependencies import get_db_session
-from user_service.enums import UserRole
-from user_service.models import Subscription, User, UserProfile, UserSession
+from user_service.enums import SubscriptionStatus, UserRole
+from user_service.models import (
+    Subscription,
+    User,
+    UserProfile,
+    UserSession,
+)
 from user_service.repository import (
     adjust_user_balance,
     create_profile,
@@ -51,21 +57,80 @@ _QUOTA_PRESETS: dict[str, int] = {
     "enterprise": 50_000,
 }
 
+ACTIVE_SUBSCRIPTION_STATUSES: set[SubscriptionStatus] = {
+    SubscriptionStatus.ACTIVE,
+    SubscriptionStatus.TRIALING,
+}
 
-def _normalised_plan(subscription: Subscription | None) -> str:
-    if subscription is None:
+
+@dataclass(frozen=True)
+class PlanSnapshot:
+    id: int
+    name: str
+    level: str
+    monthly_cost: Decimal
+
+
+def _select_active_subscription(
+    subscriptions: Sequence[Subscription] | None,
+) -> Subscription | None:
+    if not subscriptions:
+        return None
+    active = [
+        subscription
+        for subscription in subscriptions
+        if subscription.status in ACTIVE_SUBSCRIPTION_STATUSES
+    ]
+    if not active:
+        return None
+    return max(active, key=lambda item: item.current_period_end)
+
+
+def _current_plan_snapshot(user: User) -> PlanSnapshot | None:
+    plan = user.subscription_plan
+    if plan is not None:
+        return PlanSnapshot(
+            id=plan.id,
+            name=plan.name,
+            level=plan.level,
+            monthly_cost=plan.monthly_cost,
+        )
+
+    active_subscription = _select_active_subscription(user.subscriptions)
+    if active_subscription is None:
+        return None
+
+    tier_value = active_subscription.tier.value.strip()
+    level = tier_value or "free"
+    name = level.replace("_", " ").title()
+    return PlanSnapshot(
+        id=active_subscription.id,
+        name=name,
+        level=level,
+        monthly_cost=Decimal("0"),
+    )
+
+
+def _normalised_plan(plan_snapshot: PlanSnapshot | None) -> str:
+    """Extract a normalized plan identifier from a snapshot."""
+    if plan_snapshot is None:
         return "free"
-    level = (subscription.level or subscription.name or "free").strip()
-    return level.lower() or "free"
+    candidates = [plan_snapshot.level, plan_snapshot.name]
+    for candidate in candidates:
+        stripped = candidate.strip()
+        if stripped:
+            return stripped.lower()
+    return "free"
 
 
-def _quota_summary(subscription: Subscription | None, balance: Decimal) -> QuotaSummary:
-    plan_key = _normalised_plan(subscription)
+def _quota_summary(plan_snapshot: PlanSnapshot | None, balance: Decimal) -> QuotaSummary:
+    """Generate a QuotaSummary from a plan snapshot and user balance."""
+    plan_key = _normalised_plan(plan_snapshot)
     monthly_allocation = _QUOTA_PRESETS.get(plan_key, 5_000)
     requires_top_up = balance <= Decimal("0")
     remaining_allocation = monthly_allocation if not requires_top_up else 0
     plan_label = (
-        subscription.name if subscription and subscription.name else plan_key.title()
+        plan_snapshot.name if plan_snapshot and plan_snapshot.name else plan_key.title()
     )
 
     return QuotaSummary(
@@ -123,12 +188,13 @@ def _build_profile_payload(profile: UserProfile | None) -> UserProfileResponse |
 def _build_user_payload(
     user: User, *, include_sessions: Iterable[UserSession]
 ) -> UserResponse:
+    plan_snapshot = _current_plan_snapshot(user)
     subscription_summary = (
-        SubscriptionSummary.model_validate(user.subscription)
-        if user.subscription is not None
+        SubscriptionSummary.model_validate(plan_snapshot)
+        if plan_snapshot is not None
         else None
     )
-    quotas = _quota_summary(user.subscription, user.balance or Decimal("0"))
+    quotas = _quota_summary(plan_snapshot, user.balance or Decimal("0"))
     sessions_payload = _build_session_payload(list(include_sessions))
     profile_payload = _build_profile_payload(user.profile)
 
@@ -231,7 +297,8 @@ async def read_balance(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    quotas = _quota_summary(user.subscription, user.balance or Decimal("0"))
+    plan_snapshot = _current_plan_snapshot(user)
+    quotas = _quota_summary(plan_snapshot, user.balance or Decimal("0"))
     return BalanceResponse(balance=user.balance, quotas=quotas)
 
 
@@ -271,7 +338,8 @@ async def adjust_balance(
         raise HTTPException(status_code=status_code, detail=detail) from exc
 
     await session.refresh(target_user)
-    quotas = _quota_summary(target_user.subscription, new_balance)
+    plan_snapshot = _current_plan_snapshot(target_user)
+    quotas = _quota_summary(plan_snapshot, new_balance)
 
     logger.info(
         "balance_adjusted",
