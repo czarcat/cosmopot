@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Literal, TypedDict
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict
@@ -52,12 +53,32 @@ from backend.services import (
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 
+class _CookieKwargs(TypedDict, total=False):
+    httponly: bool
+    secure: bool
+    samesite: Literal["lax", "strict", "none"]
+    path: str
+    domain: str
+
+
 def _now() -> datetime:
     return datetime.now(UTC)
 
 
 def _user_to_read(user: User) -> UserRead:
     return UserRead.model_validate(user)
+
+
+def _cookie_kwargs(settings: Settings) -> _CookieKwargs:
+    kwargs: _CookieKwargs = {
+        "httponly": True,
+        "secure": settings.jwt.cookie_secure,
+        "samesite": settings.jwt.cookie_samesite,
+        "path": settings.jwt.cookie_path,
+    }
+    if settings.jwt.cookie_domain is not None:
+        kwargs["domain"] = settings.jwt.cookie_domain
+    return kwargs
 
 
 def _set_auth_cookies(
@@ -68,14 +89,7 @@ def _set_auth_cookies(
     access_token = tokens.tokens.access_token
     refresh_token = tokens.tokens.refresh_token
 
-    cookie_kwargs: dict[str, object] = {
-        "httponly": True,
-        "secure": settings.jwt.cookie_secure,
-        "samesite": settings.jwt.cookie_samesite,
-        "path": settings.jwt.cookie_path,
-    }
-    if settings.jwt.cookie_domain:
-        cookie_kwargs["domain"] = settings.jwt.cookie_domain
+    cookie_kwargs = _cookie_kwargs(settings)
 
     access_expires = settings.jwt.access_token_exp_minutes * 60
     refresh_expires = settings.jwt.refresh_token_exp_days * 24 * 60 * 60
@@ -95,14 +109,7 @@ def _set_auth_cookies(
 
 
 def _clear_auth_cookies(response: Response, settings: Settings) -> None:
-    cookie_kwargs: dict[str, object] = {
-        "httponly": True,
-        "secure": settings.jwt.cookie_secure,
-        "samesite": settings.jwt.cookie_samesite,
-        "path": settings.jwt.cookie_path,
-    }
-    if settings.jwt.cookie_domain:
-        cookie_kwargs["domain"] = settings.jwt.cookie_domain
+    cookie_kwargs = _cookie_kwargs(settings)
 
     response.set_cookie(settings.jwt.access_cookie_name, "", max_age=0, **cookie_kwargs)
     response.set_cookie(
