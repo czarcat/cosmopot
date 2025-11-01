@@ -176,8 +176,8 @@ class Subscription(Base):
     provider_data: Mapped[dict] = mapped_column(
         JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
-    metadata: Mapped[dict] = mapped_column(
-        JSON, nullable=False, default=dict, server_default=text("'{}'")
+    meta_data: Mapped[dict] = mapped_column(
+        "metadata", JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
     current_period_start: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -224,6 +224,18 @@ Index(
 )
 
 
+# Add backward-compatible property for Subscription.metadata
+def _get_subscription_metadata(self) -> dict:
+    return self.meta_data
+
+
+def _set_subscription_metadata(self, value: dict) -> None:
+    self.meta_data = value
+
+
+Subscription.metadata = property(_get_subscription_metadata, _set_subscription_metadata)
+
+
 class SubscriptionHistory(Base):
     """Immutable snapshots capturing subscription changes."""
 
@@ -256,8 +268,8 @@ class SubscriptionHistory(Base):
     provider_data: Mapped[dict] = mapped_column(
         JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
-    metadata: Mapped[dict] = mapped_column(
-        JSON, nullable=False, default=dict, server_default=text("'{}'")
+    meta_data: Mapped[dict] = mapped_column(
+        "metadata", JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
     current_period_start: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
@@ -273,6 +285,18 @@ Index(
     "ix_subscription_history_subscription_id",
     SubscriptionHistory.subscription_id,
 )
+
+
+# Add backward-compatible property for SubscriptionHistory.metadata
+def _get_subscription_history_metadata(self) -> dict:
+    return self.meta_data
+
+
+def _set_subscription_history_metadata(self, value: dict) -> None:
+    self.meta_data = value
+
+
+SubscriptionHistory.metadata = property(_get_subscription_history_metadata, _set_subscription_history_metadata)
 
 
 class Payment(Base):
@@ -299,8 +323,8 @@ class Payment(Base):
     provider_data: Mapped[dict] = mapped_column(
         JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
-    metadata: Mapped[dict] = mapped_column(
-        JSON, nullable=False, default=dict, server_default=text("'{}'")
+    meta_data: Mapped[dict] = mapped_column(
+        "metadata", JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
     paid_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -330,6 +354,18 @@ Index(
 )
 
 
+# Add backward-compatible property for Payment.metadata
+def _get_payment_metadata(self) -> dict:
+    return self.meta_data
+
+
+def _set_payment_metadata(self, value: dict) -> None:
+    self.meta_data = value
+
+
+Payment.metadata = property(_get_payment_metadata, _set_payment_metadata)
+
+
 class Transaction(Base):
     """Ledger line item tied to a payment and optionally a subscription."""
 
@@ -353,8 +389,8 @@ class Transaction(Base):
     )
     description: Mapped[Optional[str]] = mapped_column(String(255))
     provider_reference: Mapped[Optional[str]] = mapped_column(String(120))
-    metadata: Mapped[dict] = mapped_column(
-        JSON, nullable=False, default=dict, server_default=text("'{}'")
+    meta_data: Mapped[dict] = mapped_column(
+        "metadata", JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -378,6 +414,18 @@ Index(
     sqlite_where=text("provider_reference IS NOT NULL"),
     postgresql_where=text("provider_reference IS NOT NULL"),
 )
+
+
+# Add backward-compatible property for Transaction.metadata
+def _get_transaction_metadata(self) -> dict:
+    return self.meta_data
+
+
+def _set_transaction_metadata(self, value: dict) -> None:
+    self.meta_data = value
+
+
+Transaction.metadata = property(_get_transaction_metadata, _set_transaction_metadata)
 
 
 class Prompt(Base):

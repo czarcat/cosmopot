@@ -9,7 +9,7 @@ from yookassa import Payment as YooPayment
 try:  # pragma: no cover - compatibility layer for SDK import changes
     from yookassa.exceptions import YooKassaError
 except ImportError:  # pragma: no cover
-    from yookassa.domain.exceptions import YooKassaError
+    from yookassa.domain.exceptions import ApiError as YooKassaError
 
 from .exceptions import PaymentGatewayError
 

@@ -26,7 +26,7 @@ class GenerationTask(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     user_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     prompt: Mapped[str] = mapped_column(String(1024), nullable=False)
     parameters: Mapped[dict[str, Any]] = mapped_column(
-        JSONType(), default_factory=dict, nullable=False
+        JSONType(), default=dict, nullable=False
     )
     status: Mapped[GenerationTaskStatus] = mapped_column(
         Enum(GenerationTaskStatus, name="generation_task_status", native_enum=False),
@@ -38,8 +38,8 @@ class GenerationTask(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     s3_bucket: Mapped[str] = mapped_column(String(128), nullable=False)
     s3_key: Mapped[str] = mapped_column(String(512), nullable=False)
     input_url: Mapped[str | None] = mapped_column(String(2048))
-    metadata: Mapped[dict[str, Any]] = mapped_column(
-        JSONType(), default_factory=dict, nullable=False
+    meta_data: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONType(), default=dict, nullable=False
     )
     error_message: Mapped[str | None] = mapped_column(String(512))
 
@@ -48,6 +48,18 @@ class GenerationTask(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+
+
+# Add backward-compatible property after class definition
+def _get_metadata(self: GenerationTask) -> dict[str, Any]:
+    return self.meta_data
+
+
+def _set_metadata(self: GenerationTask, value: dict[str, Any]) -> None:
+    self.meta_data = value
+
+
+GenerationTask.metadata = property(_get_metadata, _set_metadata)
 
 
 class GenerationTaskEvent(UUIDPrimaryKeyMixin, TimestampMixin, JSONDataMixin, Base):

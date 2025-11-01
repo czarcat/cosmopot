@@ -47,6 +47,6 @@ class TimestampMixin:
 class JSONDataMixin:
     data: Mapped[dict[str, Any]] = mapped_column(
         JSONType(),
-        default_factory=dict,
+        default=dict,
         nullable=False,
     )
