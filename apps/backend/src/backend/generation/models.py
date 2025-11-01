@@ -6,7 +6,13 @@ from typing import Any
 from sqlalchemy import BigInteger, Enum, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.db.base import Base, JSONDataMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from backend.db.base import (
+    Base,
+    JSONDataMixin,
+    MetadataAliasMixin,
+    TimestampMixin,
+    UUIDPrimaryKeyMixin,
+)
 from backend.db.types import JSONType
 
 from .enums import GenerationEventType, GenerationTaskStatus
@@ -14,7 +20,7 @@ from .enums import GenerationEventType, GenerationTaskStatus
 __all__ = ["GenerationTask", "GenerationTaskEvent"]
 
 
-class GenerationTask(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class GenerationTask(MetadataAliasMixin, UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """Persistent representation of an image generation request."""
 
     __tablename__ = "generation_tasks"
@@ -48,18 +54,6 @@ class GenerationTask(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-
-
-# Add backward-compatible property after class definition
-def _get_metadata(self: GenerationTask) -> dict[str, Any]:
-    return self.meta_data
-
-
-def _set_metadata(self: GenerationTask, value: dict[str, Any]) -> None:
-    self.meta_data = value
-
-
-GenerationTask.metadata = property(_get_metadata, _set_metadata)
 
 
 class GenerationTaskEvent(UUIDPrimaryKeyMixin, TimestampMixin, JSONDataMixin, Base):

@@ -50,3 +50,33 @@ class JSONDataMixin:
         default=dict,
         nullable=False,
     )
+
+
+class MetadataAliasMixin:
+    """Provide instance-level access to JSON metadata without shadowing Base.metadata."""
+
+    _metadata_marker = object()
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        metadata_value = kwargs.pop("metadata", self._metadata_marker)
+        if (
+            metadata_value is not self._metadata_marker
+            and "meta_data" not in kwargs
+        ):
+            kwargs["meta_data"] = metadata_value
+        super().__init__(*args, **kwargs)
+
+    def __getattribute__(self, name: str) -> Any:
+        if name == "metadata":
+            return super().__getattribute__("meta_data")
+        return super().__getattribute__(name)
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        if key == "metadata":
+            key = "meta_data"
+        super().__setattr__(key, value)
+
+    def __delattr__(self, name: str) -> None:
+        if name == "metadata":
+            name = "meta_data"
+        super().__delattr__(name)
