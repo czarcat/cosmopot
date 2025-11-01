@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, TypeAlias
+from typing import Any, Mapping, TypeAlias, cast
 
 from sqlalchemy import (
     JSON,
@@ -14,6 +14,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    MetaData,
     Numeric,
     String,
     Text,
@@ -40,6 +41,7 @@ JSONDict: TypeAlias = dict[str, Any]
 
 class Base(DeclarativeBase):
     """Base class for declarative models."""
+    metadata: MetaData | JSONDict
 
 
 class MetadataAliasMixin:
@@ -47,6 +49,7 @@ class MetadataAliasMixin:
     Base.metadata."""
 
     _metadata_marker = object()
+    meta_data: JSONDict
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         metadata_value = kwargs.pop("metadata", self._metadata_marker)
@@ -54,20 +57,17 @@ class MetadataAliasMixin:
             kwargs["meta_data"] = metadata_value
         super().__init__(*args, **kwargs)
 
-    def __getattribute__(self, name: str) -> Any:
-        if name == "metadata":
-            return super().__getattribute__("meta_data")
-        return super().__getattribute__(name)
+    @property
+    def metadata(self) -> JSONDict:
+        return cast(JSONDict, self.meta_data)
 
-    def __setattr__(self, key: str, value: Any) -> None:
-        if key == "metadata":
-            key = "meta_data"
-        super().__setattr__(key, value)
+    @metadata.setter
+    def metadata(self, value: Mapping[str, Any]) -> None:
+        self.meta_data = dict(value)
 
-    def __delattr__(self, name: str) -> None:
-        if name == "metadata":
-            name = "meta_data"
-        super().__delattr__(name)
+    @metadata.deleter
+    def metadata(self) -> None:
+        del self.meta_data
 
 
 class SubscriptionPlan(Base):
